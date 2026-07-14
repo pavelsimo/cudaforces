@@ -2,7 +2,7 @@
 
 import sqlmodel
 
-from . import db
+from . import db, problems
 from .models import Identity, User
 
 SEED_EMAIL = "dev@example.com"
@@ -10,6 +10,8 @@ SEED_EMAIL = "dev@example.com"
 
 def seed() -> None:
     with db.session() as session:
+        problems.sync_problems(session)
+        print(f"Synced {len(problems.all_problems())} problems")
         identity = session.exec(sqlmodel.select(Identity).where(Identity.email == SEED_EMAIL)).first()
         if identity is None:
             identity = Identity(email=SEED_EMAIL)

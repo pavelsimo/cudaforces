@@ -1,6 +1,6 @@
 MODULE := cudaforces
 
-.PHONY: setup dev test lint fmt fmt-check ci db-migrate db-makemigrations db-rollback db-reset seed deploy clean
+.PHONY: setup dev test lint fmt fmt-check ci db-migrate db-makemigrations db-rollback db-reset seed gen-tests deploy clean
 
 setup:
 	uv sync --dev
@@ -44,6 +44,9 @@ db-reset:
 
 seed:
 	uv run python -m $(MODULE).seed
+
+gen-tests:
+	uv run python -m $(MODULE).generate
 
 deploy:
 	kamal deploy
