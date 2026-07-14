@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta charset="utf-8">
+<title>cudaforces — GPU kernel problemset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0c0f12;color:#dbe2ea;font-family:'Space Grotesk','Helvetica Neue',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#7ee787;text-decoration:none}a:hover{color:#a5f3ab}
+::selection{background:rgba(126,231,135,.25)}
+input::placeholder{color:#57626e}
+input:focus{outline:none;border-color:rgba(126,231,135,.6)}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#242c34;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+</style>
+</helmet>
+<div style="position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:0 26px;height:58px;background:rgba(12,15,18,.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)">
+  <div onClick="{{goHome}}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+    <div style="width:26px;height:26px;border-radius:7px;border:1.5px solid #7ee787;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2.5px;padding:4.5px">
+      <div style="background:#7ee787;border-radius:2px"></div>
+      <div style="background:rgba(126,231,135,.35);border-radius:2px"></div>
+      <div style="background:rgba(126,231,135,.35);border-radius:2px"></div>
+      <div style="background:#7ee787;border-radius:2px"></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16.5px;letter-spacing:-.02em;color:#f0f4f8">cuda<span style="color:#7ee787">forces</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:18px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:110px;height:5px;border-radius:99px;background:#1c232b;overflow:hidden"><div style="height:100%;background:#7ee787;border-radius:99px;width:{{progressPct}}"></div></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#8b98a5">{{solvedLine}}</span>
+    </div>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b98a5;border:1px solid rgba(255,255,255,.12);padding:3px 9px;border-radius:99px">v1 · statements only</span>
+    <a href="https://github.com/karpathy/llm.c/tree/master/dev/cuda" target="_blank" style="font-size:13px">llm.c/dev/cuda ↗</a>
+  </div>
+</div>
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Problemset" style="max-width:1060px;margin:0 auto;padding:46px 24px 0">
+  <h1 style="margin:0 0 10px;font-size:36px;font-weight:700;letter-spacing:-.02em;color:#f0f4f8">Problemset</h1>
+  <p style="margin:0;font-size:15px;line-height:1.6;color:#8b98a5;max-width:660px;text-wrap:pretty">Every CUDA kernel you need to train GPT-2 from scratch — distilled from <a href="https://github.com/karpathy/llm.c" target="_blank">karpathy/llm.c</a> into {{totalLabel}} problems, ordered as a curriculum. Read the statement, implement it locally, mark it solved.</p>
+  <div style="display:flex;align-items:center;gap:10px;margin:30px 0 28px;flex-wrap:wrap">
+    <input value="{{query}}" onChange="{{setQuery}}" placeholder="Search problems, tags, files…" style="flex:1;min-width:240px;max-width:380px;background:#11161c;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 14px;color:#dbe2ea;font-size:13.5px;font-family:'Space Grotesk',sans-serif">
+    <div style="display:flex;gap:8px">
+      <sc-for list="{{diffChips}}" as="c" hint-placeholder-count="4">
+        <button onClick="{{c.pick}}" style="cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:99px;color:{{c.col}};background:{{c.bg}};border:1px solid {{c.bd}}">{{c.label}}</button>
+      </sc-for>
+    </div>
+  </div>
+  <sc-for list="{{chapterList}}" as="ch" hint-placeholder-count="3">
+    <div style="margin-bottom:30px">
+      <div style="display:flex;align-items:baseline;gap:12px;padding:0 4px 12px;flex-wrap:wrap">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#7ee787">{{ch.num2}}</span>
+        <span style="font-size:17px;font-weight:600;color:#eef2f6">{{ch.title}}</span>
+        <span style="font-size:13px;color:#78848f">{{ch.desc}}</span>
+      </div>
+      <div style="background:#10141a;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden">
+        <sc-for list="{{ch.problems}}" as="pr" hint-placeholder-count="3">
+          <div onClick="{{pr.open}}" style="display:grid;grid-template-columns:44px minmax(0,1fr) 190px 92px 52px 38px;align-items:center;gap:14px;padding:13px 20px;border-top:1px solid rgba(255,255,255,.05);cursor:pointer;background:transparent;transition:background .12s" style-hover="background:rgba(255,255,255,.03)">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#5c6873">{{pr.idLabel}}</span>
+            <div style="min-width:0">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                <span style="font-size:14.5px;font-weight:600;color:#e8edf2">{{pr.title}}</span>
+                <sc-for list="{{pr.tagList}}" as="t" hint-placeholder-count="2">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#78848f;background:rgba(255,255,255,.05);padding:2px 7px;border-radius:99px">{{t}}</span>
+                </sc-for>
+              </div>
+              <div style="font-size:12.5px;color:#78848f;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{pr.summary}}</div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#5c6873;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{pr.file}}</span>
+            <span style="justify-self:start;font-size:11px;font-weight:600;letter-spacing:.02em;padding:3px 10px;border-radius:99px;color:{{pr.dc}};background:{{pr.dbg}};border:1px solid {{pr.dbd}}">{{pr.difficulty}}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:{{pr.ratingCol}}">{{pr.ratingText}}</span>
+            <div onClick="{{pr.toggle}}" title="Toggle solved" style="width:22px;height:22px;border-radius:50%;border:1.5px solid {{pr.ckBorder}};background:{{pr.ckBg}};color:#0c0f12;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{pr.ckMark}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+  <sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;padding:60px 0;color:#78848f;font-size:14px">No problems match — clear the search or difficulty filter.</div>
+  </sc-if>
+  <div style="text-align:center;padding:24px 0 48px;font-size:12px;color:#57626e;line-height:1.7">cudaforces v1 — a study companion for <a href="https://github.com/karpathy/llm.c" target="_blank">karpathy/llm.c</a>.<br>Independent project; not affiliated with Codeforces or LeetGPU.</div>
+</div>
+</sc-if>
+<sc-if value="{{isProblem}}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Problem">
+<sc-if value="{{hasP}}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:minmax(430px,46%) minmax(0,1fr);height:calc(100vh - 58px)">
+    <div ref="{{leftRef}}" style="overflow-y:auto;padding:30px 38px 70px;border-right:1px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+        <a href="#/">← Problemset</a>
+        <span style="color:#3a434d">/</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#78848f">{{p.idLabel}} · {{p.chapterTitle}}</span>
+      </div>
+      <h1 style="margin:18px 0 14px;font-size:29px;font-weight:700;letter-spacing:-.01em;color:#f0f4f8">{{p.title}}</h1>
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:24px">
+        <span style="font-size:11px;font-weight:600;letter-spacing:.02em;padding:4px 11px;border-radius:99px;color:{{p.dc}};background:{{p.dbg}};border:1px solid {{p.dbd}}">{{p.difficulty}}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:{{p.ratingCol}}">★ {{p.rating}}</span>
+        <sc-for list="{{p.tagList}}" as="t" hint-placeholder-count="2">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#78848f;background:rgba(255,255,255,.05);padding:3px 9px;border-radius:99px">{{t}}</span>
+        </sc-for>
+        <button onClick="{{p.toggleBtn}}" style="margin-left:auto;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;border:1.5px solid #7ee787;color:{{p.solveColor}};background:{{p.solveBg}}">{{p.solveLabel}}</button>
+      </div>
+      <sc-for list="{{p.blocks}}" as="pg" hint-placeholder-count="3">
+        <sc-if value="{{pg.mono}}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;color:#cfe3d2;background:#11161c;border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:12px 16px;margin:14px 0;overflow-x:auto">{{pg.text}}</div>
+        </sc-if>
+        <sc-if value="{{pg.plain}}" hint-placeholder-val="{{ true }}">
+          <p style="font-size:14.5px;line-height:1.75;color:#b7c2cc;margin:14px 0;text-wrap:pretty">{{pg.text}}</p>
+        </sc-if>
+      </sc-for>
+      <h3 style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#8b98a5;margin:30px 0 10px">Implementation Requirements</h3>
+      <ul style="margin:0;padding-left:20px">
+        <sc-for list="{{p.requirements}}" as="r" hint-placeholder-count="3">
+          <li style="font-size:14px;line-height:1.7;color:#b7c2cc;margin:5px 0">{{r}}</li>
+        </sc-for>
+      </ul>
+      <sc-for list="{{p.examples}}" as="ex" hint-placeholder-count="1">
+        <div>
+          <h3 style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#8b98a5;margin:30px 0 10px">Example {{ex.n}}</h3>
+          <div style="background:#11161c;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:15px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7">
+            <div style="color:#78848f;margin-bottom:3px">Input:</div>
+            <div style="white-space:pre-wrap;color:#cfd9e3">{{ex.input}}</div>
+            <div style="color:#78848f;margin:12px 0 3px">Output:</div>
+            <div style="white-space:pre-wrap;color:#cfd9e3">{{ex.output}}</div>
+          </div>
+        </div>
+      </sc-for>
+      <h3 style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#8b98a5;margin:30px 0 10px">Constraints</h3>
+      <ul style="margin:0;padding-left:20px">
+        <sc-for list="{{p.constraints}}" as="cn" hint-placeholder-count="3">
+          <li style="font-size:13.5px;line-height:1.7;color:#b7c2cc;margin:5px 0">{{cn}}</li>
+        </sc-for>
+      </ul>
+      <div style="margin-top:30px;padding:16px 19px;background:rgba(126,231,135,.05);border:1px solid rgba(126,231,135,.18);border-radius:11px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7ee787;margin-bottom:7px">In llm.c</div>
+        <p style="margin:0 0 9px;font-size:13.5px;line-height:1.7;color:#b7c2cc;text-wrap:pretty">{{p.note}}</p>
+        <a href="{{p.ghUrl}}" target="_blank" style="font-family:'JetBrains Mono',monospace;font-size:12.5px">dev/cuda/{{p.file}} ↗</a>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-top:34px">
+        <sc-if value="{{hasPrev}}" hint-placeholder-val="{{ false }}"><a href="{{prevHref}}" style="font-size:13px">← {{prevTitle}}</a></sc-if>
+        <span style="flex:1"></span>
+        <sc-if value="{{hasNext}}" hint-placeholder-val="{{ false }}"><a href="{{nextHref}}" style="font-size:13px">{{nextTitle}} →</a></sc-if>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;min-width:0;background:#0d1117">
+      <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#e8edf2;background:#161b22;border:1px solid rgba(255,255,255,.1);padding:6px 13px;border-radius:8px"><span style="width:7px;height:7px;border-radius:50%;background:#e3b341"></span>solution.cu</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#78848f;border:1px solid rgba(255,255,255,.1);padding:3px 8px;border-radius:99px">read-only in v1</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#78848f">CUDA 12.8</span>
+          <button onClick="{{run}}" style="cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:600;color:#dbe2ea;background:#1c232b;border:1px solid rgba(255,255,255,.12);padding:7px 15px;border-radius:8px" style-hover="background:#242d37">▶ Run</button>
+          <button onClick="{{submit}}" style="cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:700;color:#0c0f12;background:#7ee787;border:1px solid #7ee787;padding:7px 15px;border-radius:8px" style-hover="background:#a5f3ab">Submit</button>
+        </div>
+      </div>
+      <div ref="{{codeRef}}" style="flex:1;overflow:auto;padding:14px 0">
+        <sc-for list="{{codeLines}}" as="ln" hint-placeholder-count="14">
+          <div style="display:flex;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.68">
+            <span style="flex:none;width:52px;text-align:right;padding-right:18px;color:#3d444d;user-select:none">{{ln.n}}</span>
+            <span style="white-space:pre;padding-right:28px;color:#e6edf3">{{ln.el}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:none;border-top:1px solid rgba(255,255,255,.08)">
+        <div style="padding:9px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#78848f;border-bottom:1px solid rgba(255,255,255,.06)">Console Output</div>
+        <div style="padding:13px 18px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:#57626e">
+          <div><span style="color:#7ee787">$</span> nvcc -O3 --use_fast_math solution.cu -o solution</div>
+          <div>judge offline in v1 — statements only. Compile locally, or benchmark on an A100 via llm.c's benchmark_on_modal.py</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{toast}}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1c2128;border:1px solid rgba(255,255,255,.14);color:#e6edf3;padding:12px 20px;border-radius:10px;font-size:13.5px;box-shadow:0 12px 32px rgba(0,0,0,.5);z-index:100;animation:toastIn .18s ease;max-width:480px">{{toast}}</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showRatings&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Problem list&quot;},&quot;showTags&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Problem list&quot;},&quot;orderBy&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;curriculum&quot;,&quot;difficulty&quot;,&quot;rating&quot;],&quot;default&quot;:&quot;curriculum&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Problem list&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let solved = [];
+    try { solved = JSON.parse(localStorage.getItem('cudaforces_solved')) || []; } catch (e) {}
+    this.state = { chapters: null, problems: null, view: 'list', slug: null, query: '', diff: 'All', solved, toast: null };
+    this.leftRef = React.createRef();
+    this.codeRef = React.createRef();
+    this._hl = {};
+  }
+  componentDidMount() {
+    this._onHash = () => {
+      const m = location.hash.match(/^#\/problem\/([\w-]+)/);
+      this.setState({ view: m ? 'problem' : 'list', slug: m ? m[1] : null });
+    };
+    window.addEventListener('hashchange', this._onHash);
+    this._onHash();
+    import('./problems.js').then(m => this.setState({ chapters: m.chapters, problems: m.problems }));
+  }
+  componentWillUnmount() {
+    window.removeEventListener('hashchange', this._onHash);
+    clearTimeout(this._tt);
+  }
+  componentDidUpdate(pp, ps) {
+    if (ps.slug !== this.state.slug) {
+      if (this.leftRef.current) this.leftRef.current.scrollTop = 0;
+      if (this.codeRef.current) this.codeRef.current.scrollTop = 0;
+    }
+    if (ps.view !== this.state.view && this.state.view === 'list') window.scrollTo(0, 0);
+  }
+  notify(msg) {
+    clearTimeout(this._tt);
+    this.setState({ toast: msg });
+    this._tt = setTimeout(() => this.setState({ toast: null }), 3600);
+  }
+  toggleSolved(slug) {
+    this.setState(s => {
+      const set = new Set(s.solved);
+      if (set.has(slug)) set.delete(slug); else set.add(slug);
+      const arr = [...set];
+      try { localStorage.setItem('cudaforces_solved', JSON.stringify(arr)); } catch (e) {}
+      return { solved: arr };
+    });
+  }
+  hlLine(line) {
+    const RE = /(\/\/.*)|("(?:[^"\\]|\\.)*"|<[\w./]+>)|(^\s*#\w+)|\b(if|else|for|while|return|extern|struct|sizeof|static)\b|\b(void|const|float|int|long|char|size_t|bool|dim3|unsigned|signed)\b|(__global__|__shared__|__restrict__|__launch_bounds__|__syncthreads|threadIdx|blockIdx|blockDim|gridDim)|\b(atomicAdd|cudaDeviceSynchronize|cudaMalloc|cudaMemcpy|expf|logf|tanhf|sqrtf|powf|fmaxf|fminf)\b|\b(0x[\da-fA-F]+|\d+\.?\d*(?:e[+-]?\d+)?f?)\b/g;
+    const colors = ['', '#8b949e', '#a5d6ff', '#ff7b72', '#ff7b72', '#ffa657', '#d2a8ff', '#79c0ff', '#79c0ff'];
+    const out = [];
+    let last = 0, m;
+    while ((m = RE.exec(line)) !== null) {
+      if (m.index > last) out.push(line.slice(last, m.index));
+      let gi = 1;
+      for (let i = 1; i <= 8; i++) { if (m[i] !== undefined) { gi = i; break; } }
+      out.push(React.createElement('span', { key: 't' + out.length, style: { color: colors[gi], fontStyle: gi === 1 ? 'italic' : 'normal' } }, m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < line.length) out.push(line.slice(last));
+    if (out.length === 0) out.push('\u00a0');
+    return out;
+  }
+  highlight(slug, code) {
+    if (this._hl[slug]) return this._hl[slug];
+    const lines = code.split('\n').map((l, i) => ({ n: i + 1, el: React.createElement('span', { key: i }, this.hlLine(l)) }));
+    this._hl[slug] = lines;
+    return lines;
+  }
+  renderVals() {
+    const s = this.state;
+    const showRatings = this.props.showRatings ?? true;
+    const showTags = this.props.showTags ?? true;
+    const orderBy = this.props.orderBy ?? 'curriculum';
+    const diffC = { Easy: '#56d364', Medium: '#e3b341', Hard: '#f85149' };
+    const rc = r => r < 1200 ? '#9aa4ae' : r < 1400 ? '#56d364' : r < 1600 ? '#4dd0c4' : r < 1900 ? '#58a6ff' : r < 2100 ? '#bc8cff' : r < 2400 ? '#ffa657' : '#f85149';
+    const chapters = s.chapters || [], probs = s.problems || [];
+    const solvedSet = new Set(s.solved);
+    const letters = 'ABCDEFGHIJ';
+    const decorated = [];
+    chapters.forEach(ch => {
+      probs.filter(p => p.chapter === ch.id).forEach((p, i) => {
+        const solved = solvedSet.has(p.slug), d = diffC[p.difficulty];
+        decorated.push({
+          ...p, idLabel: '' + ch.num + letters[i], chapterTitle: ch.title, solved,
+          open: () => { location.hash = '#/problem/' + p.slug; },
+          toggle: (e) => { e.stopPropagation(); this.toggleSolved(p.slug); },
+          dc: d, dbg: d + '1a', dbd: d + '4d',
+          ratingCol: rc(p.rating), ratingText: showRatings ? String(p.rating) : '',
+          tagList: showTags ? p.tags : [],
+          ckMark: solved ? '✓' : '', ckBorder: solved ? '#7ee787' : '#39434d', ckBg: solved ? '#7ee787' : 'transparent'
+        });
+      });
+    });
+    const q = s.query.trim().toLowerCase();
+    const match = p => (s.diff === 'All' || p.difficulty === s.diff) && (!q || (p.title + ' ' + p.tags.join(' ') + ' ' + p.file).toLowerCase().includes(q));
+    let chapterList;
+    if (orderBy === 'curriculum') {
+      chapterList = chapters.map(ch => ({
+        num2: (ch.num < 10 ? '0' : '') + ch.num, title: ch.title, desc: ch.desc,
+        problems: decorated.filter(p => p.chapter === ch.id && match(p))
+      })).filter(ch => ch.problems.length > 0);
+    } else {
+      const ord = { Easy: 0, Medium: 1, Hard: 2 };
+      const sorted = decorated.filter(match).sort((a, b) => orderBy === 'rating' ? a.rating - b.rating : (ord[a.difficulty] - ord[b.difficulty] || a.rating - b.rating));
+      chapterList = sorted.length ? [{ num2: '——', title: orderBy === 'rating' ? 'All problems by rating' : 'All problems by difficulty', desc: '', problems: sorted }] : [];
+    }
+    const total = probs.length;
+    const solvedCount = probs.filter(p => solvedSet.has(p.slug)).length;
+    const cur = decorated.find(p => p.slug === s.slug) || null;
+    let p = null;
+    if (cur) {
+      p = {
+        ...cur,
+        blocks: cur.statement.map(t => {
+          const mono = /[=≤≥]/.test(t) && !/\. [A-Z(]/.test(t) && t.length < 180 && !t.endsWith('.') && !t.endsWith(':');
+          return { text: t, mono, plain: !mono };
+        }),
+        examples: cur.examples.map((e, i) => ({ n: i + 1, input: e.input, output: e.output })),
+        ghUrl: 'https://github.com/karpathy/llm.c/blob/master/dev/cuda/' + cur.file,
+        solveLabel: cur.solved ? 'Solved ✓' : 'Mark as solved',
+        solveBg: cur.solved ? '#7ee787' : 'transparent',
+        solveColor: cur.solved ? '#0c0f12' : '#7ee787',
+        toggleBtn: () => this.toggleSolved(cur.slug)
+      };
+    }
+    const idx = cur ? decorated.indexOf(cur) : -1;
+    const prev = idx > 0 ? decorated[idx - 1] : null;
+    const next = (idx >= 0 && idx < decorated.length - 1) ? decorated[idx + 1] : null;
+    return {
+      isList: s.view === 'list', isProblem: s.view === 'problem', hasP: !!p, p,
+      codeLines: cur ? this.highlight(cur.slug, cur.starter) : [],
+      chapterList, noResults: probs.length > 0 && chapterList.length === 0,
+      query: s.query, setQuery: e => this.setState({ query: e.target.value }),
+      diffChips: ['All', 'Easy', 'Medium', 'Hard'].map(d => {
+        const active = s.diff === d, c = d === 'All' ? '#9aa4ae' : diffC[d];
+        return {
+          label: d, pick: () => this.setState({ diff: d }),
+          col: active ? '#0c0f12' : c,
+          bg: active ? (d === 'All' ? '#dbe2ea' : c) : 'transparent',
+          bd: active ? 'transparent' : (d === 'All' ? '#39434d' : c + '55')
+        };
+      }),
+      total, totalLabel: total || '…',
+      solvedLine: total ? solvedCount + '/' + total + ' solved' : 'loading…',
+      progressPct: total ? Math.round(solvedCount / total * 100) + '%' : '0%',
+      hasPrev: !!prev, prevHref: prev ? '#/problem/' + prev.slug : '#/', prevTitle: prev ? prev.title : '',
+      hasNext: !!next, nextHref: next ? '#/problem/' + next.slug : '#/', nextTitle: next ? next.title : '',
+      run: () => this.notify('⚡ The judge is offline in v1 — code execution ships in v2. Compile locally with nvcc.'),
+      submit: () => this.notify('Submissions open in v2. Verified it locally? Mark it as solved.'),
+      toast: s.toast, leftRef: this.leftRef, codeRef: this.codeRef,
+      goHome: () => { location.hash = '#/'; }
+    };
+  }
+}
+</script>
+</body>
+</html>

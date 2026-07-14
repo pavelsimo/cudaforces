@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "commit": {
+      "source": "pavelsimo/skills",
+      "sourceType": "github",
+      "skillPath": "skills/commit/SKILL.md",
+      "computedHash": "0948dcb099a8a1c4e50aa4e0af0ca152e16ca86b373cbae46c0f3fc0fa591a81"
+    },
+    "create-web": {
+      "source": "pavelsimo/skills",
+      "sourceType": "github",
+      "skillPath": "skills/create-web/SKILL.md",
+      "computedHash": "9f81707ccdcc2990add28028d0dcc4c96f60985d65f9c2ae5c51d83fe5b3c85f"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+[project]
+name = "cudaforces"
+version = "0.1.0"
+description = "Codeforces-style CUDA kernel problemset with a local nvcc judge"
+requires-python = ">=3.13"
+dependencies = [
+    "reflex>=0.9",
+    "fastapi>=0.115",
+    "sqlmodel>=0.0.24",
+    "alembic>=1.15",
+    "numpy>=2.5.1",
+    "reflex-monaco>=0.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "mypy>=1.10",
+    "ruff>=0.6",
+    "lefthook>=1.10",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+files = ["cudaforces"]
+disallow_untyped_decorators = false # @rx.page / @rx.event trip strict decorator checks
+
+[[tool.mypy.overrides]]
+module = "cudaforces.pages.*"
+warn_return_any = false # rx components are lazily loaded and type as Any
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=cudaforces --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["cudaforces"]
+omit = ["*/pages/*", "*/state.py", "*/cudaforces.py", "*/seed.py"]
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
