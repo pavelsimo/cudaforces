@@ -8,8 +8,9 @@ setup:
 	uv run python -m $(MODULE).seed
 	uv run lefthook install
 
+# data/ holds judge workspaces and test files — writing there must not trigger hot reload
 dev:
-	uv run reflex run
+	REFLEX_HOT_RELOAD_EXCLUDE_PATHS=data uv run reflex run
 
 test:
 	uv run pytest

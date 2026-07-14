@@ -38,8 +38,12 @@ files = ["cudaforces"]
 disallow_untyped_decorators = false # @rx.page / @rx.event trip strict decorator checks
 
 [[tool.mypy.overrides]]
-module = "cudaforces.pages.*"
+module = ["cudaforces.pages.*", "cudaforces.components.*"]
 warn_return_any = false # rx components are lazily loaded and type as Any
+
+[[tool.mypy.overrides]]
+module = "reflex_monaco.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

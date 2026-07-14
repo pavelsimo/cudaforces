@@ -104,6 +104,10 @@ def run_test(binary: Path, in_path: Path, timeout_s: float) -> tuple[str, str, i
     return "ok", proc.stdout, elapsed_ms
 
 
+def test_count(slug: str) -> int:
+    return len(_test_files(slug))
+
+
 def _test_files(slug: str) -> list[Path]:
     directory = generate.tests_dir(slug)
     in_files = sorted(directory.glob("*.in"))
@@ -122,7 +126,7 @@ def judge(
 ) -> JudgeResult:
     rtol, atol, default_limit_ms = problems.judge_meta(slug)
     limit_ms = time_limit_ms or default_limit_ms
-    workdir = workdir or settings.DATA_DIR / "submissions" / uuid.uuid4().hex
+    workdir = (workdir or settings.DATA_DIR / "submissions" / uuid.uuid4().hex).resolve()
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "solution.cu").write_text(code)
 

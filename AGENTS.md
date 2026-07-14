@@ -118,13 +118,27 @@ cudaforces/
 ├── seed.py              # Development seed data
 ├── settings.py          # Environment-driven configuration
 ├── state.py             # Reflex state classes (thin orchestration)
-└── pages/               # One page per file (index, sign_in, verify)
-tests/                   # pytest — domain functions + API
+├── theme.py             # Design tokens (mockup palette, fonts, verdict colors)
+├── judge.py             # nvcc judge: compile, run tests, compare, submit (plain functions)
+├── generate.py          # Writes data/tests/<slug>/NN.{in,out} from the NumPy references
+├── components/          # header, badges, editor (the Monaco seam)
+├── problems/            # content.json + registry + per-problem judge assets
+│   └── <slug>/          # harness.cu (stdin -> solve() -> stdout) + ref.py (NumPy reference)
+└── pages/               # One page per file (index, problem, submissions, sign_in, verify)
+tests/                   # pytest — domain functions + API (GPU judge tests auto-skip)
 alembic/                 # Database migrations (make db-makemigrations)
 config/deploy.yml        # Kamal deployment config
 Caddyfile                # Production: static frontend + backend proxy
 rxconfig.py              # Reflex config (app name, db_url, api_url)
 ```
+
+## Judge Notes
+
+- The judge (`cudaforces/judge.py`) shells out to `nvcc` — settings: `NVCC_PATH`, `NVCC_ARCH` (default `native`), `DATA_DIR`. Never add `--use_fast_math`; it diverges from the NumPy references.
+- Test data on disk is a build artifact: regenerate with `make gen-tests`, never hand-edit.
+- Judge workspaces live under `data/submissions/`; `make dev` excludes `data/` from hot reload — writing there from a running server must not trigger a restart.
+- Float tolerances are per-problem module constants (`RTOL`/`ATOL`/`TIME_LIMIT_MS`) in each `ref.py`. Loosen per-problem, never globally.
+- Reflex 0.9 gotchas already encoded here: explicit `set_x` event setters (auto-setters are off), dataclasses for structured vars (`rx.Base` is gone), dynamic route args must not be shadowed by state vars, ORM instances must not escape `db.session()` into state.
 
 ## Commit Convention
 
