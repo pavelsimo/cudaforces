@@ -1,6 +1,6 @@
 MODULE := cudaforces
 
-.PHONY: setup dev test lint fmt fmt-check ci db-migrate db-makemigrations db-rollback db-reset seed gen-tests deploy clean
+.PHONY: setup dev test lint fmt fmt-check ci db-migrate db-makemigrations db-rollback db-reset seed sync-catalog gen-tests deploy clean
 
 setup:
 	uv sync --dev
@@ -10,7 +10,7 @@ setup:
 
 # Watch only code: root-level artifacts (data/, cudaforces.db-wal/-shm, .coverage)
 # otherwise trigger reload loops; granian's ignore patterns miss WAL files
-dev:
+dev: sync-catalog
 	REFLEX_HOT_RELOAD_OVERRIDE_PATHS=cudaforces:rxconfig.py uv run reflex run
 
 test:
@@ -46,6 +46,9 @@ db-reset:
 
 seed:
 	uv run python -m $(MODULE).seed
+
+sync-catalog:
+	uv run python -m $(MODULE).sync_catalog
 
 gen-tests:
 	uv run python -m $(MODULE).generate

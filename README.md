@@ -62,6 +62,7 @@ uv run python -m cudaforces.judge residual-forward my_solution.cu
 | `make db-makemigrations` | Generate a migration from model changes |
 | `make db-migrate` | Apply pending migrations |
 | `make db-reset` | Recreate the database and seed |
+| `make sync-catalog` | Synchronize problem definitions into the database |
 | `make deploy` | Deploy to production |
 
 ## Adding a problem
