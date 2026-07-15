@@ -1,29 +1,39 @@
-# CudaForces
+# cudaforces
 
-Codeforces-style CUDA kernel problemset with a local nvcc judge.
+A problemset for learning CUDA, inspired by Codeforces. Work through 50 kernel exercises in the browser, then compile and judge them locally with `nvcc` on your own GPU.
 
-Fifty CUDA kernel exercises organized as a curriculum with difficulty ratings. The first 30 cover essential maps, reductions, scans, atomics, sorting, tiling, sparse workloads, graphs, and simulation; the final 20 apply those skills to the full GPT-2 training loop. Write the kernel in the browser (Monaco editor), hit Submit, and the judge compiles it with your local `nvcc`, runs it on your GPU against generated test data, and marks the problem solved on Accepted.
+## Preview
+
+### Problemset
+
+![CudaForces problemset with navigation, search, difficulty filters, and CUDA exercises](docs/images/cudaforces-problemset.png)
+
+### Problem workspace
+
+![Grid-Stride SAXPY problem with its statement, CUDA editor, run and submit controls, and judge console](docs/images/cudaforces-grid-stride-saxpy.png)
 
 ## Requirements
 
-- **CUDA toolkit** (`nvcc` on PATH, or set `NVCC_PATH`) and an NVIDIA GPU; the judge compiles and runs submissions locally
-- Python managed by `uv`
+- **CUDA toolkit** (`nvcc` on PATH, or set `NVCC_PATH`) and an NVIDIA GPU. The judge compiles and runs submissions locally.
+- `uv` for Python dependencies
 
-## Setup
+## Quick start
 
 ```bash
 git clone https://github.com/pavelsimo/cudaforces
 cd cudaforces
-make setup       # deps, migrations, seeds the 50 problems
-make gen-tests   # generate judge test data from the NumPy references
+make setup       # install dependencies, migrate, and seed 50 problems
+make gen-tests   # generate judge tests from the NumPy references
 make dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000). Use "Continue as guest", or sign in with any email: the magic-link code is printed to the server console in development.
+Visit [http://localhost:3000](http://localhost:3000). Continue as a guest, or sign in with any email. In development, the magic-link code is printed to the server console.
 
-## The judge
+## How judging works
 
-Each problem ships a `harness.cu` (reads test input, calls your `solve()`, prints outputs) and a NumPy reference (`ref.py`) that generates the test files under `data/tests/<slug>/`. On submit:
+Each problem includes a `harness.cu` file that reads test input, calls your `solve()` function, and prints its output. A NumPy reference in `ref.py` generates the test files under `data/tests/<slug>/`.
+
+When you submit:
 
 1. `nvcc -O2 -arch=native solution.cu harness.cu` (compile error → **CE**)
 2. Run each test with the input on stdin (crash → **RE**, timeout → **TLE**)
