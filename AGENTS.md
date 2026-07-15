@@ -136,7 +136,7 @@ rxconfig.py              # Reflex config (app name, db_url, api_url)
 
 - The judge (`cudaforces/judge.py`) shells out to `nvcc`. Settings: `NVCC_PATH`, `NVCC_ARCH` (default `native`), `DATA_DIR`. Never add `--use_fast_math`; it diverges from the NumPy references.
 - Test data on disk is a build artifact: regenerate with `make gen-tests`, never hand-edit.
-- Judge workspaces live under `data/submissions/`; `make dev` excludes `data/` from hot reload, so writing there from a running server must not trigger a restart.
+- Judge workspaces live under `data/submissions/`; `make dev` hot-reloads only `cudaforces/` and `rxconfig.py` (via `REFLEX_HOT_RELOAD_OVERRIDE_PATHS`), so writing to `data/` or the SQLite WAL files from a running server must not trigger a restart.
 - Float tolerances are per-problem module constants (`RTOL`/`ATOL`/`TIME_LIMIT_MS`) in each `ref.py`. Loosen per-problem, never globally.
 - Reflex 0.9 gotchas already encoded here: explicit `set_x` event setters (auto-setters are off), dataclasses for structured vars (`rx.Base` is gone), dynamic route args must not be shadowed by state vars, ORM instances must not escape `db.session()` into state.
 

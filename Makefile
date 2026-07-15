@@ -8,9 +8,10 @@ setup:
 	uv run python -m $(MODULE).seed
 	uv run lefthook install
 
-# data/ holds judge workspaces and test files; writing there must not trigger hot reload
+# Watch only code: root-level artifacts (data/, cudaforces.db-wal/-shm, .coverage)
+# otherwise trigger reload loops; granian's ignore patterns miss WAL files
 dev:
-	REFLEX_HOT_RELOAD_EXCLUDE_PATHS=data uv run reflex run
+	REFLEX_HOT_RELOAD_OVERRIDE_PATHS=cudaforces:rxconfig.py uv run reflex run
 
 test:
 	uv run pytest
