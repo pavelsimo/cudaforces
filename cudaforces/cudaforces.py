@@ -3,8 +3,8 @@
 import reflex as rx
 
 from . import (
-    db,  # noqa: F401  — registers the SQLite PRAGMA listener
-    pages,  # noqa: F401  — registers @rx.page routes
+    db,  # noqa: F401  (registers the SQLite PRAGMA listener)
+    pages,  # noqa: F401  (registers @rx.page routes)
     theme,
 )
 from .api import api

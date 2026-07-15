@@ -78,7 +78,7 @@ def _row(row: SubmissionRow) -> rx.Component:
 
 @rx.page(
     route="/submissions",
-    title="CudaForces — Submissions",
+    title="CudaForces · Submissions",
     on_load=[AuthState.check_auth, SubmissionsState.load, ProgressState.load],
 )
 def submissions() -> rx.Component:
@@ -97,7 +97,7 @@ def submissions() -> rx.Component:
                     margin_top="18px",
                 ),
                 rx.text(
-                    "No submissions yet — pick a problem and hit Submit.",
+                    "No submissions yet. Pick a problem and hit Submit.",
                     color=theme.MUTED,
                     font_size="14px",
                     margin_top="12px",

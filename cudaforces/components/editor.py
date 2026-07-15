@@ -1,4 +1,4 @@
-"""The CUDA code editor — the single seam for the Monaco dependency.
+"""The CUDA code editor: the single seam for the Monaco dependency.
 
 If reflex-monaco ever breaks against a reflex upgrade, replace the body of
 code_editor with the rx.text_area fallback below (kept as _fallback_editor).

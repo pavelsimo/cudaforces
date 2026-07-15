@@ -1,4 +1,4 @@
-# Name of your application — used to uniquely configure containers.
+# Name of your application, used to uniquely configure containers.
 service: cudaforces
 
 # Name of the container image.

@@ -6,7 +6,7 @@ Twenty CUDA kernel exercises covering the full GPT-2 training loop (elementwise 
 
 ## Requirements
 
-- **CUDA toolkit** (`nvcc` on PATH, or set `NVCC_PATH`) and an NVIDIA GPU — the judge compiles and runs submissions locally
+- **CUDA toolkit** (`nvcc` on PATH, or set `NVCC_PATH`) and an NVIDIA GPU; the judge compiles and runs submissions locally
 - Python managed by `uv`
 
 ## Setup
@@ -68,12 +68,12 @@ uv run python -m cudaforces.judge residual-forward my_solution.cu
 
 1. Add the statement/starter entry to `cudaforces/problems/content.json`
 2. Create `cudaforces/problems/<slug_with_underscores>/` with `__init__.py`, `ref.py` (NumPy `tests()` + `solve()`), and `harness.cu`
-3. `make seed && make gen-tests` — the registry upserts by slug
+3. `make seed && make gen-tests` (the registry upserts by slug)
 
 ## Documentation
 
-- [Development guide](docs/development.md) — local setup, workflow, architecture overview
-- [Deployment guide](docs/deployment.md) — Kamal setup and environment variables
+- [Development guide](docs/development.md): local setup, workflow, architecture overview
+- [Deployment guide](docs/deployment.md): Kamal setup and environment variables
 
 ## License
 

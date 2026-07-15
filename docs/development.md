@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [uv](https://docs.astral.sh/uv/) — installs Python 3.13 automatically
+- [uv](https://docs.astral.sh/uv/): installs Python 3.13 automatically
 - That's it. Reflex downloads its own JavaScript runtime on first run.
 
 ## Setup
@@ -39,7 +39,7 @@ Visit [http://localhost:3000](http://localhost:3000). The Reflex backend (websoc
 
 ## Authentication in development
 
-Magic link verification codes are logged to the backend console — no email server needed:
+Magic link verification codes are logged to the backend console (no email server needed):
 
 ```
 [mailer] Magic link code for dev@example.com: 123456
@@ -51,10 +51,10 @@ The seed user is `dev@example.com`. Sign in at [http://localhost:3000/sign-in](h
 
 SQLite with WAL mode, tuned in `cudaforces/db.py`:
 
-- `journal_mode=WAL` — concurrent readers alongside a single writer
-- `busy_timeout=5000` — concurrent writes queue for up to 5s instead of erroring
-- `synchronous=NORMAL` — safe with WAL, much faster than FULL
-- `foreign_keys=ON` — referential integrity enforced
+- `journal_mode=WAL`: concurrent readers alongside a single writer
+- `busy_timeout=5000`: concurrent writes queue for up to 5s instead of erroring
+- `synchronous=NORMAL`: safe with WAL, much faster than FULL
+- `foreign_keys=ON`: referential integrity enforced
 
 The development database is `cudaforces.db` in the project root (gitignored, along with its `-wal`/`-shm` files).
 
@@ -62,19 +62,19 @@ The development database is `cudaforces.db` in the project root (gitignored, alo
 
 | Concern | Convention |
 |---------|-----------|
-| Business logic | Plain functions taking a `sqlmodel.Session` — never service classes |
+| Business logic | Plain functions taking a `sqlmodel.Session`, never service classes |
 | Reflex state | Thin orchestrators: open session, call domain function, redirect |
 | State | Separate records (`Closure`, `Publication`) not boolean columns |
-| Frontend | Native Reflex components — no custom React or JavaScript |
+| Frontend | Native Reflex components (no custom React or JavaScript) |
 | API | FastAPI endpoints in `api.py` for external clients |
-| Auth | Magic links — no auth library |
-| Tests | pytest + plain fixtures — no factory libraries |
+| Auth | Magic links (no auth library) |
+| Tests | pytest + plain fixtures (no factory libraries) |
 
 See `AGENTS.md` for the complete set of conventions.
 
 ## Adding features
 
-**New model** — add a class to `cudaforces/models.py`:
+**New model**: add a class to `cudaforces/models.py`:
 
 ```python
 class Post(sqlmodel.SQLModel, table=True):
@@ -92,7 +92,7 @@ make db-makemigrations m="create posts"
 make db-migrate
 ```
 
-**New page** — add a file under `cudaforces/pages/` and register it in `pages/__init__.py`:
+**New page**: add a file under `cudaforces/pages/` and register it in `pages/__init__.py`:
 
 ```python
 @rx.page(route="/posts", title="Posts", on_load=AuthState.check_auth)
@@ -100,7 +100,7 @@ def posts() -> rx.Component:
     ...
 ```
 
-**State as a record (37signals pattern)** — "close a post" is a `Closure` row, not a `closed` boolean:
+**State as a record (37signals pattern)**: "close a post" is a `Closure` row, not a `closed` boolean:
 
 ```python
 class Closure(sqlmodel.SQLModel, table=True):

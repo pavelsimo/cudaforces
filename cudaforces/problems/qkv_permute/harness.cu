@@ -1,6 +1,6 @@
 // Judge harness for qkv-permute.
 // stdin: B T NH HS, then inp[B*T*3*NH*HS] laid out (B,T,3,NH,HS).
-// stdout: q, k, v — each B*NH*T*HS values laid out (B,NH,T,HS).
+// stdout: q, k, v, each B*NH*T*HS values laid out (B,NH,T,HS).
 #include "judge_io.h"
 
 extern "C" void solve(float* q, float* k, float* v, const float* inp,

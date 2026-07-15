@@ -1,4 +1,4 @@
-"""Verify page — exchange the emailed code for a session."""
+"""Verify page: exchange the emailed code for a session."""
 
 import reflex as rx
 

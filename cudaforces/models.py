@@ -9,12 +9,12 @@ CODE_RATE_LIMIT = 10  # codes per CODE_TTL window per identity
 
 
 def utcnow() -> datetime:
-    """Naive UTC timestamp — SQLite stores datetimes without timezone info."""
+    """Naive UTC timestamp: SQLite stores datetimes without timezone info."""
     return datetime.now(UTC).replace(tzinfo=None)
 
 
 class Identity(sqlmodel.SQLModel, table=True):
-    """A global login identity — one row per email address."""
+    """A global login identity: one row per email address."""
 
     id: int | None = sqlmodel.Field(default=None, primary_key=True)
     email: str = sqlmodel.Field(unique=True, index=True)
@@ -89,7 +89,7 @@ class Submission(sqlmodel.SQLModel, table=True):
 
 
 class Solve(sqlmodel.SQLModel, table=True):
-    """A user solved a problem — solved-ness is this record, not a boolean column."""
+    """A user solved a problem; solved-ness is this record, not a boolean column."""
 
     __table_args__ = (sqlmodel.UniqueConstraint("user_id", "problem_id"),)
 

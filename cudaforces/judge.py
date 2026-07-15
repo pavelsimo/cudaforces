@@ -1,6 +1,6 @@
 """The judge: compile a submission with nvcc and run it against the test files.
 
-Plain functions over subprocess + text comparison — no Reflex, no GPU bindings.
+Plain functions over subprocess + text comparison; no Reflex, no GPU bindings.
 Run headless with: uv run python -m cudaforces.judge <slug> <solution.cu>
 """
 
@@ -83,7 +83,7 @@ def compare_outputs(actual: str, expected: str, rtol: float, atol: float) -> str
 
 
 def run_test(binary: Path, in_path: Path, timeout_s: float) -> tuple[str, str, int]:
-    """(status, output, time_ms) — status is ok | re | tle; output is stdout or stderr."""
+    """(status, output, time_ms): status is ok | re | tle; output is stdout or stderr."""
     started = time.perf_counter()
     try:
         with in_path.open() as stdin:
@@ -160,7 +160,7 @@ def submit(session: sqlmodel.Session, user_id: int, problem: Problem, code: str)
     assert problem.id is not None
     try:
         result = judge(problem.slug, code)
-    except Exception as error:  # noqa: BLE001 — judge failures become a JE verdict
+    except Exception as error:  # noqa: BLE001 (judge failures become a JE verdict)
         result = JudgeResult(verdict="JE", compile_output=f"judge error: {error}")
     submission = Submission(
         user_id=user_id,
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     for test in outcome.tests:
         line = f"test {test.index}: {test.status} ({test.time_ms} ms)"
         if test.detail:
-            line += f" — {test.detail}"
+            line += f": {test.detail}"
         print(line)
     print(f"verdict: {outcome.verdict}")
     raise SystemExit(0 if outcome.verdict == "AC" else 1)

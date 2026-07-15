@@ -1,4 +1,4 @@
-"""Magic-link authentication domain logic. Plain functions — no Reflex runtime needed."""
+"""Magic-link authentication domain logic. Plain functions; no Reflex runtime needed."""
 
 import re
 import secrets

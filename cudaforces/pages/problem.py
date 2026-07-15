@@ -1,4 +1,4 @@
-"""Problem detail — statement on the left, editor + judge console on the right."""
+"""Problem detail: statement on the left, editor + judge console on the right."""
 
 import asyncio
 import dataclasses
@@ -136,7 +136,7 @@ class ProblemState(AuthState):
             else:
                 self.console_lines.append(
                     ConsoleLine(
-                        text=f"test {test.index}/{test_total} · {test.status.upper()} — {test.detail}",
+                        text=f"test {test.index}/{test_total} · {test.status.upper()}: {test.detail}",
                         color="#f85149",
                     )
                 )

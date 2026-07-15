@@ -1,4 +1,4 @@
-"""Sign-in page — request a magic link code by email."""
+"""Sign-in page: request a magic link code by email."""
 
 import reflex as rx
 
@@ -7,7 +7,7 @@ from ..state import AuthState
 
 
 def _guest_login() -> list[rx.Component]:
-    """Rendered only in dev (no SMTP configured) — settings are compile-time constants."""
+    """Rendered only in dev (no SMTP configured); settings are compile-time constants."""
     if not settings.GUEST_LOGIN_ENABLED:
         return []
     return [
@@ -21,7 +21,7 @@ def _guest_login() -> list[rx.Component]:
     ]
 
 
-@rx.page(route="/sign-in", title="Sign in — CudaForces")
+@rx.page(route="/sign-in", title="Sign in · CudaForces")
 def sign_in() -> rx.Component:
     return rx.container(
         rx.vstack(

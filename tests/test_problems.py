@@ -21,7 +21,7 @@ def test_every_problem_has_judge_assets() -> None:
 
 def test_content_is_clean() -> None:
     blob = problems.CONTENT_PATH.read_text()
-    assert "—" not in blob  # no em-dashes
+    assert chr(0x2014) not in blob  # no em-dashes
     assert "llm.c" not in blob  # no source attribution
     for pd in problems.all_problems():
         for para in pd.statement:

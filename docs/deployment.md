@@ -1,6 +1,6 @@
 # Deployment
 
-This app deploys with [Kamal](https://kamal-deploy.org/) — Docker-based, zero-downtime deploys to any VPS.
+This app deploys with [Kamal](https://kamal-deploy.org/): Docker-based, zero-downtime deploys to any VPS.
 
 The production container runs two processes: Caddy on port 8080 serving the statically exported frontend (and proxying `/_event` websockets, `/up`, and `/api/*` to the backend), and the Reflex backend on port 8000.
 
@@ -33,11 +33,11 @@ proxy:
   # host: my-app.example.com      # your domain
 ```
 
-`API_URL` must match the public URL users will visit — the frontend uses it for the websocket connection and API calls. Without a domain, use `http://YOUR_SERVER_IP:8080`.
+`API_URL` must match the public URL users will visit; the frontend uses it for the websocket connection and API calls. Without a domain, use `http://YOUR_SERVER_IP:8080`.
 
 ### 2. Set secrets
 
-`.kamal/secrets` reads values from your environment — it contains only `$ENV` references and is safe to commit. Export the values before deploying:
+`.kamal/secrets` reads values from your environment; it contains only `$ENV` references and is safe to commit. Export the values before deploying:
 
 ```bash
 export KAMAL_REGISTRY_PASSWORD=ghp_yourGitHubToken   # write:packages scope
@@ -94,14 +94,14 @@ Required GitHub repository secrets:
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | No | `sqlite:////data/cudaforces.db` | SQLAlchemy database URL |
 | `MAILER_FROM_ADDRESS` | No | `noreply@example.com` | Sender email |
-| `SMTP_ADDRESS` | No | — | SMTP server host (when unset, codes are logged and guest sign-in is enabled) |
+| `SMTP_ADDRESS` | No | - | SMTP server host (when unset, codes are logged and guest sign-in is enabled) |
 | `SMTP_PORT` | No | `587` | SMTP port |
-| `SMTP_USERNAME` | No | — | SMTP username |
-| `SMTP_PASSWORD` | No | — | SMTP password |
+| `SMTP_USERNAME` | No | - | SMTP username |
+| `SMTP_PASSWORD` | No | - | SMTP password |
 
 ## Database
 
-The SQLite database lives on the `cudaforces_data` Docker volume mounted at `/data` — it survives deploys and container restarts. WAL mode is enabled automatically (see `cudaforces/db.py`), so concurrent readers never block and concurrent writes queue via `busy_timeout`.
+The SQLite database lives on the `cudaforces_data` Docker volume mounted at `/data`; it survives deploys and container restarts. WAL mode is enabled automatically (see `cudaforces/db.py`), so concurrent readers never block and concurrent writes queue via `busy_timeout`.
 
 Migrations run automatically on container start (`bin/docker-entrypoint`).
 
@@ -109,7 +109,7 @@ To back up: `kamal server exec "docker run --rm -v cudaforces_data:/data -v /tmp
 
 ## Scaling note
 
-This setup intentionally runs a **single backend process** — Reflex keeps per-client state in memory. That is plenty for most single-server apps. If you ever need multiple backend workers or servers, add Redis and set `REFLEX_REDIS_URL`; until then, don't.
+This setup intentionally runs a **single backend process**: Reflex keeps per-client state in memory. That is plenty for most single-server apps. If you ever need multiple backend workers or servers, add Redis and set `REFLEX_REDIS_URL`; until then, don't.
 
 ## Useful Kamal commands
 
@@ -124,5 +124,5 @@ kamal app restart       # restart app containers
 
 ## Health check
 
-Kamal monitors `GET /up` — the FastAPI app returns `200 OK` when ready.
+Kamal monitors `GET /up`; the FastAPI app returns `200 OK` when ready.
 If the health check fails after deploy, Kamal automatically rolls back.

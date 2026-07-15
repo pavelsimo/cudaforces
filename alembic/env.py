@@ -5,7 +5,7 @@ import sqlmodel
 from alembic import context
 from cudaforces import (
     db,
-    models,  # noqa: F401  — populate SQLModel.metadata
+    models,  # noqa: F401  (populate SQLModel.metadata)
 )
 
 config = context.config

@@ -1,4 +1,4 @@
-"""Problemset — the public landing page."""
+"""Problemset: the public landing page."""
 
 import dataclasses
 import json
@@ -164,7 +164,7 @@ def _chapter_section(chapter: ChapterGroup) -> rx.Component:
         rx.hstack(
             rx.text(chapter.num_label, color=theme.ACCENT, font_family=theme.MONO, font_size="14px"),
             rx.text(chapter.title, color=theme.HEADING, font_weight="600", font_size="16px"),
-            rx.text("— ", chapter.desc, color=theme.DIM, font_size="13px", display=["none", "block"]),
+            rx.text("· ", chapter.desc, color=theme.DIM, font_size="13px", display=["none", "block"]),
             spacing="2",
             align="baseline",
         ),
@@ -184,7 +184,7 @@ def _chapter_section(chapter: ChapterGroup) -> rx.Component:
 
 @rx.page(
     route="/",
-    title="CudaForces — Problemset",
+    title="CudaForces · Problemset",
     on_load=[AuthState.load_user, ProblemListState.load, ProgressState.load],
 )
 def index() -> rx.Component:

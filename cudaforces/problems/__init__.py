@@ -1,8 +1,8 @@
 """Problem registry: statements from content.json + per-problem judge assets.
 
 Each problem owns a directory (slug with underscores) containing:
-  harness.cu — main() that reads the stdin protocol, calls solve(), prints outputs
-  ref.py     — NumPy reference: tests() -> list[RefCase], solve(inputs) -> outputs
+  harness.cu: main() that reads the stdin protocol, calls solve(), prints outputs
+  ref.py:     NumPy reference: tests() -> list[RefCase], solve(inputs) -> outputs
 """
 
 import functools
@@ -62,7 +62,7 @@ def harness_path(slug: str) -> Path:
 
 
 def judge_meta(slug: str) -> tuple[float, float, int]:
-    """(rtol, atol, time_limit_ms) — ref.py module constants override defaults."""
+    """(rtol, atol, time_limit_ms); ref.py module constants override defaults."""
     try:
         ref = ref_module(slug)
     except ModuleNotFoundError:

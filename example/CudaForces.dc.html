@@ -9,7 +9,7 @@
 <x-dc>
 <helmet>
 <meta charset="utf-8">
-<title>cudaforces — GPU kernel problemset</title>
+<title>cudaforces · GPU kernel problemset</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -46,7 +46,7 @@ input:focus{outline:none;border-color:rgba(126,231,135,.6)}
 <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
 <div data-screen-label="Problemset" style="max-width:1060px;margin:0 auto;padding:46px 24px 0">
   <h1 style="margin:0 0 10px;font-size:36px;font-weight:700;letter-spacing:-.02em;color:#f0f4f8">Problemset</h1>
-  <p style="margin:0;font-size:15px;line-height:1.6;color:#8b98a5;max-width:660px;text-wrap:pretty">Every CUDA kernel you need to train GPT-2 from scratch — distilled from <a href="https://github.com/karpathy/llm.c" target="_blank">karpathy/llm.c</a> into {{totalLabel}} problems, ordered as a curriculum. Read the statement, implement it locally, mark it solved.</p>
+  <p style="margin:0;font-size:15px;line-height:1.6;color:#8b98a5;max-width:660px;text-wrap:pretty">Every CUDA kernel you need to train GPT-2 from scratch, distilled from <a href="https://github.com/karpathy/llm.c" target="_blank">karpathy/llm.c</a> into {{totalLabel}} problems, ordered as a curriculum. Read the statement, implement it locally, mark it solved.</p>
   <div style="display:flex;align-items:center;gap:10px;margin:30px 0 28px;flex-wrap:wrap">
     <input value="{{query}}" onChange="{{setQuery}}" placeholder="Search problems, tags, files…" style="flex:1;min-width:240px;max-width:380px;background:#11161c;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 14px;color:#dbe2ea;font-size:13.5px;font-family:'Space Grotesk',sans-serif">
     <div style="display:flex;gap:8px">
@@ -85,9 +85,9 @@ input:focus{outline:none;border-color:rgba(126,231,135,.6)}
     </div>
   </sc-for>
   <sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
-    <div style="text-align:center;padding:60px 0;color:#78848f;font-size:14px">No problems match — clear the search or difficulty filter.</div>
+    <div style="text-align:center;padding:60px 0;color:#78848f;font-size:14px">No problems match. Clear the search or difficulty filter.</div>
   </sc-if>
-  <div style="text-align:center;padding:24px 0 48px;font-size:12px;color:#57626e;line-height:1.7">cudaforces v1 — a study companion for <a href="https://github.com/karpathy/llm.c" target="_blank">karpathy/llm.c</a>.<br>Independent project; not affiliated with Codeforces or LeetGPU.</div>
+  <div style="text-align:center;padding:24px 0 48px;font-size:12px;color:#57626e;line-height:1.7">cudaforces v1: a study companion for <a href="https://github.com/karpathy/llm.c" target="_blank">karpathy/llm.c</a>.<br>Independent project; not affiliated with Codeforces or LeetGPU.</div>
 </div>
 </sc-if>
 <sc-if value="{{isProblem}}" hint-placeholder-val="{{ false }}">
@@ -175,7 +175,7 @@ input:focus{outline:none;border-color:rgba(126,231,135,.6)}
         <div style="padding:9px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#78848f;border-bottom:1px solid rgba(255,255,255,.06)">Console Output</div>
         <div style="padding:13px 18px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:#57626e">
           <div><span style="color:#7ee787">$</span> nvcc -O3 --use_fast_math solution.cu -o solution</div>
-          <div>judge offline in v1 — statements only. Compile locally, or benchmark on an A100 via llm.c's benchmark_on_modal.py</div>
+          <div>judge offline in v1: statements only. Compile locally, or benchmark on an A100 via llm.c's benchmark_on_modal.py</div>
         </div>
       </div>
     </div>
@@ -290,7 +290,7 @@ class Component extends DCLogic {
     } else {
       const ord = { Easy: 0, Medium: 1, Hard: 2 };
       const sorted = decorated.filter(match).sort((a, b) => orderBy === 'rating' ? a.rating - b.rating : (ord[a.difficulty] - ord[b.difficulty] || a.rating - b.rating));
-      chapterList = sorted.length ? [{ num2: '——', title: orderBy === 'rating' ? 'All problems by rating' : 'All problems by difficulty', desc: '', problems: sorted }] : [];
+      chapterList = sorted.length ? [{ num2: '··', title: orderBy === 'rating' ? 'All problems by rating' : 'All problems by difficulty', desc: '', problems: sorted }] : [];
     }
     const total = probs.length;
     const solvedCount = probs.filter(p => solvedSet.has(p.slug)).length;
@@ -333,7 +333,7 @@ class Component extends DCLogic {
       progressPct: total ? Math.round(solvedCount / total * 100) + '%' : '0%',
       hasPrev: !!prev, prevHref: prev ? '#/problem/' + prev.slug : '#/', prevTitle: prev ? prev.title : '',
       hasNext: !!next, nextHref: next ? '#/problem/' + next.slug : '#/', nextTitle: next ? next.title : '',
-      run: () => this.notify('⚡ The judge is offline in v1 — code execution ships in v2. Compile locally with nvcc.'),
+      run: () => this.notify('⚡ The judge is offline in v1; code execution ships in v2. Compile locally with nvcc.'),
       submit: () => this.notify('Submissions open in v2. Verified it locally? Mark it as solved.'),
       toast: s.toast, leftRef: this.leftRef, codeRef: this.codeRef,
       goHome: () => { location.hash = '#/'; }

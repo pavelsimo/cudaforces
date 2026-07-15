@@ -3,7 +3,7 @@ from collections.abc import Iterator
 import pytest
 import sqlmodel
 
-from cudaforces import db as _db  # noqa: F401  — registers the SQLite PRAGMA listener
+from cudaforces import db as _db  # noqa: F401  (registers the SQLite PRAGMA listener)
 from cudaforces import models
 
 

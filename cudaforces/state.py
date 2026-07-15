@@ -34,7 +34,7 @@ class AuthState(rx.State):
 
     @rx.event
     def load_user(self) -> None:
-        """on_load for public pages — resolves the cookie without redirecting."""
+        """on_load for public pages: resolves the cookie without redirecting."""
         self._resolve_user()
 
     @rx.event
@@ -110,7 +110,7 @@ class ProgressState(AuthState):
 
     @rx.event
     def load(self) -> None:
-        from . import judge  # local import — judge pulls in generate/numpy
+        from . import judge  # local import (judge pulls in generate/numpy)
         from .models import Problem
 
         with db.session() as s:

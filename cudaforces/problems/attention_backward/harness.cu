@@ -1,5 +1,5 @@
 // Judge harness for attention-backward.
-// stdin: B NH T HS, then dout, q, k, v — each B*NH*T*HS laid out (B,NH,T,HS) —
+// stdin: B NH T HS, then dout, q, k, v (each B*NH*T*HS laid out (B,NH,T,HS)),
 // then att (B*NH*T*T, lower-triangular). dq, dk, dv are zero-initialized;
 // datt and dpreatt are zero-initialized (B,NH,T,T) scratch, not printed.
 // stdout: dq, dk, dv.

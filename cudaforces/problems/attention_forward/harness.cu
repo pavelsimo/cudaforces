@@ -1,5 +1,5 @@
 // Judge harness for attention-forward.
-// stdin: B NH T HS, then q, k, v — each B*NH*T*HS values laid out (B,NH,T,HS).
+// stdin: B NH T HS, then q, k, v, each B*NH*T*HS values laid out (B,NH,T,HS).
 // preatt and att are zero-initialized (B,NH,T,T) scratch; only out is printed.
 #include "judge_io.h"
 
