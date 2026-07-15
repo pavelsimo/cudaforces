@@ -98,6 +98,36 @@ def test_terminate_session(db: sqlmodel.Session) -> None:
     assert auth.find_session_by_token(db, session.token) is None
 
 
+def test_create_guest_session(db: sqlmodel.Session) -> None:
+    session = auth.create_guest_session(db)
+    assert len(session.token) == 64
+    user = db.get(User, session.user_id)
+    assert user is not None
+    assert user.display_name == "guest"
+
+
+def test_create_guest_session_reuses_identity_and_user(db: sqlmodel.Session) -> None:
+    first = auth.create_guest_session(db)
+    second = auth.create_guest_session(db)
+    assert first.user_id == second.user_id
+    assert first.identity_id == second.identity_id
+    assert first.token != second.token
+    assert len(db.exec(sqlmodel.select(User)).all()) == 1
+
+
+def test_guest_session_resolvable_and_terminable(db: sqlmodel.Session) -> None:
+    session = auth.create_guest_session(db)
+    found = auth.find_session_by_token(db, session.token)
+    assert found is not None
+    assert found.id == session.id
+    auth.terminate_session(db, session.token)
+    assert auth.find_session_by_token(db, session.token) is None
+
+
+def test_guest_email_cannot_enter_magic_link_flow() -> None:
+    assert not auth.valid_email(auth.GUEST_EMAIL)
+
+
 def test_mailer_logs_code_without_smtp(caplog: pytest.LogCaptureFixture) -> None:
     mailer.send_magic_link_code("dev@example.com", "123456")
     assert "123456" in caplog.text

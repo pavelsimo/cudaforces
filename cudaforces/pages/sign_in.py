@@ -2,7 +2,23 @@
 
 import reflex as rx
 
+from .. import settings
 from ..state import AuthState
+
+
+def _guest_login() -> list[rx.Component]:
+    """Rendered only in dev (no SMTP configured) — settings are compile-time constants."""
+    if not settings.GUEST_LOGIN_ENABLED:
+        return []
+    return [
+        rx.divider(),
+        rx.button(
+            "Continue as guest",
+            on_click=AuthState.sign_in_as_guest,
+            variant="outline",
+            width="100%",
+        ),
+    ]
 
 
 @rx.page(route="/sign-in", title="Sign in — CudaForces")
@@ -21,6 +37,7 @@ def sign_in() -> rx.Component:
                 width="100%",
             ),
             rx.cond(AuthState.error != "", rx.text(AuthState.error, color_scheme="red")),
+            *_guest_login(),
             spacing="4",
             padding_top="4em",
         ),

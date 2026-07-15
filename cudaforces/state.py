@@ -6,7 +6,7 @@ import reflex as rx
 import sqlmodel
 from reflex.event import EventSpec
 
-from . import auth, db, mailer
+from . import auth, db, mailer, settings
 from .models import User
 
 
@@ -70,6 +70,16 @@ class AuthState(rx.State):
         if session is None:
             self.error = "Invalid or expired code."
             return None
+        self.session_token = session.token
+        self.error = ""
+        return rx.redirect("/")
+
+    @rx.event
+    def sign_in_as_guest(self) -> EventSpec | None:
+        if not settings.GUEST_LOGIN_ENABLED:
+            return None  # handlers stay invocable even when the button is not rendered
+        with db.session() as s:
+            session = auth.create_guest_session(s)
         self.session_token = session.token
         self.error = ""
         return rx.redirect("/")

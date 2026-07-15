@@ -57,7 +57,7 @@ env:
     SMTP_PORT: "587"
 ```
 
-Until SMTP is configured, codes are logged to the container output (`kamal logs`).
+Until SMTP is configured, codes are logged to the container output (`kamal logs`) and a "Continue as guest" button appears on the sign-in page. Configure SMTP in production to disable both.
 
 ### 4. Bootstrap the server
 
@@ -94,7 +94,7 @@ Required GitHub repository secrets:
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | No | `sqlite:////data/cudaforces.db` | SQLAlchemy database URL |
 | `MAILER_FROM_ADDRESS` | No | `noreply@example.com` | Sender email |
-| `SMTP_ADDRESS` | No | — | SMTP server host (codes are logged when unset) |
+| `SMTP_ADDRESS` | No | — | SMTP server host (when unset, codes are logged and guest sign-in is enabled) |
 | `SMTP_PORT` | No | `587` | SMTP port |
 | `SMTP_USERNAME` | No | — | SMTP username |
 | `SMTP_PASSWORD` | No | — | SMTP password |

@@ -9,6 +9,10 @@ from .models import CODE_RATE_LIMIT, CODE_TTL, Identity, MagicLinkCode, Session,
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# Deliberately fails valid_email (no dot in the domain), so the guest identity
+# can never be claimed through the magic-link flow.
+GUEST_EMAIL = "guest@localhost"
+
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
@@ -76,6 +80,24 @@ def verify_code(db: sqlmodel.Session, email: str, value: str) -> Session | None:
         db.refresh(user)
     assert user.id is not None
     db.delete(code)  # codes are single-use
+    session = Session(identity_id=identity.id, user_id=user.id, token=secrets.token_hex(32))
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def create_guest_session(db: sqlmodel.Session, email: str = GUEST_EMAIL) -> Session:
+    """Dev-only sign-in: find or create the guest identity/user and open a session."""
+    identity = find_or_create_identity(db, email)
+    assert identity.id is not None
+    user = db.exec(sqlmodel.select(User).where(User.identity_id == identity.id)).first()
+    if user is None:
+        user = User(identity_id=identity.id, display_name=email.split("@")[0])
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    assert user.id is not None
     session = Session(identity_id=identity.id, user_id=user.id, token=secrets.token_hex(32))
     db.add(session)
     db.commit()

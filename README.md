@@ -19,7 +19,7 @@ make gen-tests   # generate judge test data from the NumPy references
 make dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000). Sign in with any email — the magic-link code is printed to the server console in development.
+Visit [http://localhost:3000](http://localhost:3000). Use "Continue as guest", or sign in with any email: the magic-link code is printed to the server console in development.
 
 ## The judge
 
