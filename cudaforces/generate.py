@@ -33,7 +33,9 @@ def _write_case(case: RefCase, solve: Any, in_path: Path, out_path: Path) -> Non
     outputs = solve(case.inputs)
     with out_path.open("w") as f:
         for arr in outputs:
-            f.write("\n".join(f"{float(x):.9g}" for x in np.asarray(arr).ravel()) + "\n")
+            values = np.asarray(arr).ravel()
+            if values.size:
+                f.write("\n".join(_fmt(x) for x in values) + "\n")
 
 
 def ensure_test_data(slug: str, force: bool = False) -> Path:
@@ -42,9 +44,13 @@ def ensure_test_data(slug: str, force: bool = False) -> Path:
     cases: list[RefCase] = ref.tests()
     directory = tests_dir(slug)
     paths = [(directory / f"{i:02d}.in", directory / f"{i:02d}.out") for i in range(1, len(cases) + 1)]
-    if not force and all(i.is_file() and o.is_file() for i, o in paths):
+    expected = {path for pair in paths for path in pair}
+    existing = set(directory.glob("*.in")) | set(directory.glob("*.out"))
+    if not force and all(i.is_file() and o.is_file() for i, o in paths) and existing == expected:
         return directory
     directory.mkdir(parents=True, exist_ok=True)
+    for stale in existing - expected:
+        stale.unlink()
     for case, (in_path, out_path) in zip(cases, paths, strict=True):
         _write_case(case, ref.solve, in_path, out_path)
     return directory

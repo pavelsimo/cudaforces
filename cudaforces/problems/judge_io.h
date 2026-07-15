@@ -60,11 +60,33 @@ static inline int* read_ints_device(size_t n) {
     return d;
 }
 
+static inline int* device_int_zeros(size_t n) {
+    int* d = NULL;
+    CUDA_CHECK(cudaMalloc(&d, n * sizeof(int)));
+    CUDA_CHECK(cudaMemset(d, 0, n * sizeof(int)));
+    return d;
+}
+
 static inline float* device_zeros(size_t n) {
     float* d = NULL;
     CUDA_CHECK(cudaMalloc(&d, n * sizeof(float)));
     CUDA_CHECK(cudaMemset(d, 0, n * sizeof(float)));
     return d;
+}
+
+static inline int read_device_int(const int* d) {
+    int value;
+    CUDA_CHECK(cudaMemcpy(&value, d, sizeof(int), cudaMemcpyDeviceToHost));
+    return value;
+}
+
+static inline void print_device_ints(const int* d, size_t n) {
+    int* h = (int*)malloc(n * sizeof(int));
+    if (h == NULL) input_error();
+    CUDA_CHECK(cudaMemcpy(h, d, n * sizeof(int), cudaMemcpyDeviceToHost));
+    for (size_t i = 0; i < n; i++)
+        printf("%d\n", h[i]);
+    free(h);
 }
 
 static inline void print_device_floats(const float* d, size_t n) {

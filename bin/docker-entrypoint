@@ -5,6 +5,9 @@ cd /app
 # Apply pending migrations before serving traffic.
 alembic upgrade head
 
+# Keep the database-backed catalog aligned with the bundled problem definitions.
+python -m cudaforces.sync_catalog
+
 # Caddy serves the exported frontend and proxies backend routes.
 caddy start --config /etc/caddy/Caddyfile --adapter caddyfile
 

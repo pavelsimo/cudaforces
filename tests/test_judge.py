@@ -37,6 +37,10 @@ def test_compare_outputs_garbage_fails() -> None:
     assert detail is not None and "not a number" in detail
 
 
+def test_exact_comparison_rejects_large_integer_off_by_one() -> None:
+    assert judge.compare_outputs("100001\n", "100000\n", 0.0, 0.0) is not None
+
+
 def _write_script(path: Path, body: str) -> Path:
     path.write_text(f"#!/bin/sh\n{body}\n")
     path.chmod(path.stat().st_mode | stat.S_IXUSR)

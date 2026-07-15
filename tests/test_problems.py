@@ -1,22 +1,39 @@
+import re
+
 import sqlmodel
 
 from cudaforces import problems
 from cudaforces.models import Problem
 
 
-def test_registry_has_twenty_problems() -> None:
+def _normalize_abi(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def test_registry_has_fifty_problems() -> None:
     defs = problems.all_problems()
-    assert len(defs) == 20
-    assert len({p.slug for p in defs}) == 20
-    assert [p.position for p in defs] == list(range(20))
+    assert len(defs) == 50
+    assert len({p.slug for p in defs}) == 50
+    assert [p.position for p in defs] == list(range(50))
+    difficulties = [p.difficulty for p in defs[:30]]
+    assert difficulties.count("Easy") == 15
+    assert difficulties.count("Medium") == 10
+    assert difficulties.count("Hard") == 5
 
 
 def test_every_problem_has_judge_assets() -> None:
-    for pd in problems.all_problems():
+    for index, pd in enumerate(problems.all_problems()):
         assert 'extern "C" void solve' in pd.starter_code, pd.slug
         problem_dir = problems.PROBLEMS_DIR / pd.module_name
-        assert (problem_dir / "harness.cu").is_file(), pd.slug
+        harness_path = problem_dir / "harness.cu"
+        assert harness_path.is_file(), pd.slug
         assert (problem_dir / "ref.py").is_file(), pd.slug
+        starter_abi = re.search(r'extern "C" void solve\((.*?)\)\s*\{', pd.starter_code, re.DOTALL)
+        harness_abi = re.search(r'extern "C" void solve\((.*?)\)\s*;', harness_path.read_text(), re.DOTALL)
+        assert starter_abi is not None and harness_abi is not None, pd.slug
+        assert _normalize_abi(starter_abi.group(1)) == _normalize_abi(harness_abi.group(1)), pd.slug
+        if index < 30:
+            assert len(problems.ref_module(pd.slug).tests()) >= 4, pd.slug
 
 
 def test_content_is_clean() -> None:
@@ -39,11 +56,15 @@ def test_get_unknown_slug_raises() -> None:
 def test_sync_problems_is_idempotent(db: sqlmodel.Session) -> None:
     problems.sync_problems(db)
     rows = db.exec(sqlmodel.select(Problem)).all()
-    assert len(rows) == 20
+    assert len(rows) == 50
+    residual = db.exec(sqlmodel.select(Problem).where(Problem.slug == "residual-forward")).one()
+    residual_id = residual.id
 
     problems.sync_problems(db)
     rows = db.exec(sqlmodel.select(Problem).order_by(sqlmodel.col(Problem.position))).all()
-    assert len(rows) == 20
-    assert rows[0].slug == "residual-forward"
-    assert rows[0].title == "Residual Forward"
+    assert len(rows) == 50
+    assert rows[0].slug == "grid-stride-saxpy"
+    assert rows[0].title == "Grid-Stride SAXPY"
     assert rows[0].chapter_num == 1
+    residual = db.exec(sqlmodel.select(Problem).where(Problem.slug == "residual-forward")).one()
+    assert residual.id == residual_id

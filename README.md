@@ -2,7 +2,7 @@
 
 Codeforces-style CUDA kernel problemset with a local nvcc judge.
 
-Twenty CUDA kernel exercises covering the full GPT-2 training loop (elementwise ops, embeddings, reductions, matmuls, attention, loss, and the optimizer) organized as a curriculum with difficulty ratings. Write the kernel in the browser (Monaco editor), hit Submit, and the judge compiles it with your local `nvcc`, runs it on your GPU against generated test data, and marks the problem solved on Accepted.
+Fifty CUDA kernel exercises organized as a curriculum with difficulty ratings. The first 30 cover essential maps, reductions, scans, atomics, sorting, tiling, sparse workloads, graphs, and simulation; the final 20 apply those skills to the full GPT-2 training loop. Write the kernel in the browser (Monaco editor), hit Submit, and the judge compiles it with your local `nvcc`, runs it on your GPU against generated test data, and marks the problem solved on Accepted.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ Twenty CUDA kernel exercises covering the full GPT-2 training loop (elementwise 
 ```bash
 git clone https://github.com/pavelsimo/cudaforces
 cd cudaforces
-make setup       # deps, migrations, seeds the 20 problems
+make setup       # deps, migrations, seeds the 50 problems
 make gen-tests   # generate judge test data from the NumPy references
 make dev
 ```

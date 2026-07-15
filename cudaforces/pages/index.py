@@ -193,9 +193,9 @@ def index() -> rx.Component:
         rx.vstack(
             rx.heading("Problemset", color=theme.HEADING, size="8", letter_spacing="-0.02em"),
             rx.text(
-                "Twenty CUDA kernel exercises covering the full GPT-2 training loop: elementwise ops, "
-                "embeddings, reductions, matmuls, attention, loss, and the optimizer. Write the kernel, "
-                "hit Submit, and the judge compiles it with nvcc and runs it on your GPU.",
+                "Fifty CUDA kernel exercises, from core maps, reductions, scans, atomics, tiling and sparse "
+                "workloads through the full GPT-2 training loop. Write the kernel, hit Submit, and the judge "
+                "compiles it with nvcc and runs it on your GPU.",
                 color=theme.MUTED,
                 font_size="14px",
             ),
