@@ -21,7 +21,6 @@ class ProblemRow:
     title: str = ""
     summary: str = ""
     tags: list[str] = dataclasses.field(default_factory=list)
-    llmc_file: str = ""
     difficulty: str = ""
     difficulty_color: str = ""
     rating: int = 0
@@ -71,7 +70,6 @@ class ProblemListState(AuthState):
                     title=p.title,
                     summary=p.summary,
                     tags=json.loads(p.tags_json),
-                    llmc_file=p.llmc_file,
                     difficulty=p.difficulty,
                     difficulty_color=theme.difficulty_color(p.difficulty),
                     rating=p.rating,
@@ -132,13 +130,6 @@ def _problem_row(row: ProblemRow) -> rx.Component:
                 spacing="1",
                 align="start",
             ),
-            rx.text(
-                row.llmc_file,
-                color=theme.DIM,
-                font_family=theme.MONO,
-                font_size="12px",
-                display=["none", "none", "block"],
-            ),
             difficulty_badge(row.difficulty, row.difficulty_color),
             rx.text(
                 "★ ",
@@ -154,7 +145,7 @@ def _problem_row(row: ProblemRow) -> rx.Component:
                 rx.text("", width="10px"),
             ),
             display="grid",
-            grid_template_columns="44px minmax(0,1fr) 190px 92px 64px 24px",
+            grid_template_columns="44px minmax(0,1fr) 92px 64px 24px",
             align_items="center",
             gap="12px",
             padding="13px 20px",
@@ -202,15 +193,9 @@ def index() -> rx.Component:
         rx.vstack(
             rx.heading("Problemset", color=theme.HEADING, size="8", letter_spacing="-0.02em"),
             rx.text(
-                "GPU kernel exercises distilled from ",
-                rx.link(
-                    "karpathy/llm.c",
-                    href="https://github.com/karpathy/llm.c/tree/master/dev/cuda",
-                    is_external=True,
-                    color=theme.ACCENT,
-                    underline="hover",
-                ),
-                ". Write the kernel, hit Submit, and the judge compiles it with nvcc and runs it on your GPU.",
+                "Twenty CUDA kernel exercises covering the full GPT-2 training loop: elementwise ops, "
+                "embeddings, reductions, matmuls, attention, loss, and the optimizer. Write the kernel, "
+                "hit Submit, and the judge compiles it with nvcc and runs it on your GPU.",
                 color=theme.MUTED,
                 font_size="14px",
             ),

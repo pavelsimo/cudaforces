@@ -54,7 +54,6 @@
     "elementwise",
     "memory-bound"
    ],
-   "file": "residual_forward.cu",
    "summary": "Element-wise addition of two tensors — the residual (skip) connection.",
    "statement": [
     "Write a GPU kernel that performs element-wise addition of two vectors of 32-bit floats: out[i] = inp1[i] + inp2[i].",
@@ -76,7 +75,7 @@
     "All values are finite 32-bit floats",
     "This kernel is memory-bound: 2 reads + 1 write per element"
    ],
-   "note": "Applied twice per transformer block in train_gpt2.cu. The reference file also shows a version using 128-bit packed loads (x128) to maximize bandwidth.",
+   "note": "Applied twice per transformer block in the full training loop. A common optimization uses 128-bit packed loads to maximize bandwidth.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void residual_forward_kernel(float* out, const float* inp1,\n                                        const float* inp2, int N) {\n    // TODO: one thread per element\n}\n\n// out, inp1, inp2 are device pointers (N floats each)\nextern \"C\" void solve(float* out, const float* inp1, const float* inp2, int N) {\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    residual_forward_kernel<<<blocksPerGrid, threadsPerBlock>>>(out, inp1, inp2, N);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -89,7 +88,6 @@
     "elementwise",
     "activation"
    ],
-   "file": "gelu_forward.cu",
    "summary": "The GELU activation (tanh approximation) used in the GPT-2 MLP.",
    "statement": [
     "Implement the GELU activation function using the tanh approximation, applied element-wise:",
@@ -112,7 +110,7 @@
     "1 ≤ N ≤ 100,000,000",
     "Use tanhf, not tanh — stay in fp32"
    ],
-   "note": "Kernel 1 in gelu_forward.cu is the naive port; kernel 2 processes 8 elements per thread via the Packed128 struct for full memory bandwidth.",
+   "note": "The naive version assigns one element per thread; an optimized version processes 8 elements per thread via 128-bit vectorized loads for full memory bandwidth.",
    "starter": "#include <cuda_runtime.h>\n#define GELU_SCALING_FACTOR sqrtf(2.0f / M_PI)\n\n__global__ void gelu_forward_kernel(float* out, const float* inp, int N) {\n    // TODO: out[i] = 0.5 * x * (1 + tanhf(GELU_SCALING_FACTOR * (x + 0.044715 * x^3)))\n}\n\n// out, inp are device pointers (N floats each)\nextern \"C\" void solve(float* out, const float* inp, int N) {\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    gelu_forward_kernel<<<blocksPerGrid, threadsPerBlock>>>(out, inp, N);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -125,7 +123,6 @@
     "elementwise",
     "backward"
    ],
-   "file": "gelu_backward.cu",
    "summary": "Backpropagate through the GELU: chain rule on an element-wise op.",
    "statement": [
     "Given the original input inp and the upstream gradient dout, compute the gradient with respect to the input: dinp[i] = dout[i] · GELU′(inp[i]).",
@@ -149,7 +146,7 @@
     "Do not recompute the forward output — only the local gradient is needed",
     "3 reads + 1 write per element: still memory-bound"
    ],
-   "note": "llm.c stores the pre-activation inp during the forward pass precisely so this kernel can be a cheap element-wise op instead of recomputation.",
+   "note": "Production training code stores the pre-activation inp during the forward pass precisely so this kernel can be a cheap element-wise op instead of recomputation.",
    "starter": "#include <cuda_runtime.h>\n#define GELU_SCALING_FACTOR sqrtf(2.0f / M_PI)\n\n__global__ void gelu_backward_kernel(float* dinp, const float* inp,\n                                     const float* dout, int N) {\n    // TODO: dinp[i] = dout[i] * local_grad(inp[i])\n}\n\n// dinp, inp, dout are device pointers (N floats each)\nextern \"C\" void solve(float* dinp, const float* inp, const float* dout, int N) {\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    gelu_backward_kernel<<<blocksPerGrid, threadsPerBlock>>>(dinp, inp, dout, N);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -162,7 +159,6 @@
     "gather",
     "embeddings"
    ],
-   "file": "encoder_forward.cu",
    "summary": "Token embedding + positional embedding: the first op of the network.",
    "statement": [
     "The encoder turns a batch of token ids into the model's first activations. Given token ids inp of shape (B, T), a token embedding table wte of shape (V, C) and a positional embedding table wpe of shape (T, C), compute:",
@@ -184,7 +180,7 @@
     "1 ≤ B ≤ 32, 1 ≤ T ≤ 1024, C = 768, V = 50257",
     "Memory-coalesced access matters: consecutive threads should read consecutive floats"
    ],
-   "note": "Kernel 2 in encoder_forward.cu switches from one-thread-per-(b,t) to one-thread-per-(b,t,c) — a ~4× speedup from better parallelism and coalescing.",
+   "note": "Switching from one-thread-per-(b,t) to one-thread-per-(b,t,c) yields a ~4× speedup from better parallelism and coalescing.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void encoder_forward_kernel(float* out, const int* inp,\n                                       const float* wte, const float* wpe,\n                                       int B, int T, int C) {\n    // TODO: out[b,t,c] = wte[inp[b,t], c] + wpe[t, c]\n}\n\n// out: (B,T,C), inp: (B,T) token ids, wte: (V,C), wpe: (T,C) — device pointers\nextern \"C\" void solve(float* out, const int* inp, const float* wte,\n                      const float* wpe, int B, int T, int C) {\n    int N = B * T * C;\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    encoder_forward_kernel<<<blocksPerGrid, threadsPerBlock>>>(out, inp, wte, wpe, B, T, C);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -198,7 +194,6 @@
     "atomics",
     "backward"
    ],
-   "file": "encoder_backward.cu",
    "summary": "Scatter-add gradients into the embedding tables — your first race condition.",
    "statement": [
     "Backpropagate through the encoder. Given upstream gradients dout of shape (B, T, C), accumulate into the embedding gradients:",
@@ -220,7 +215,7 @@
     "1 ≤ B ≤ 32, 1 ≤ T ≤ 1024, C = 768, V = 50257",
     "Token distribution is skewed — common tokens create heavy atomic contention"
    ],
-   "note": "Kernel 2 in encoder_backward.cu splits the work so dwpe needs no atomics at all (parallelize over (t, c), loop over b). Only dwte truly needs atomicAdd.",
+   "note": "A smarter decomposition splits the work so dwpe needs no atomics at all (parallelize over (t, c), loop over b). Only dwte truly needs atomicAdd.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void encoder_backward_kernel(float* dwte, float* dwpe,\n                                        const float* dout, const int* inp,\n                                        int B, int T, int C) {\n    // TODO: careful — multiple threads may write the same dwte row.\n    // atomicAdd(&dwte[ix * C + c], d);\n}\n\n// dwte: (V,C), dwpe: (T,C) pre-zeroed; dout: (B,T,C); inp: (B,T) — device pointers\nextern \"C\" void solve(float* dwte, float* dwpe, const float* dout,\n                      const int* inp, int B, int T, int C) {\n    int N = B * T * C;\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    encoder_backward_kernel<<<blocksPerGrid, threadsPerBlock>>>(dwte, dwpe, dout, inp, B, T, C);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -234,7 +229,6 @@
     "shared-memory",
     "numerics"
    ],
-   "file": "softmax_forward.cu",
    "summary": "Numerically-stable row softmax with shared-memory reductions.",
    "statement": [
     "Compute the softmax of each row of an (N, C) matrix:",
@@ -258,7 +252,7 @@
     "C can be as large as 50,257 — a single thread per row is far too slow",
     "1 ≤ N × C ≤ 400,000,000"
    ],
-   "note": "softmax_forward.cu develops 8 versions, from naive (kernel 1) through shared-memory blocks (kernel 3-4) to warp-per-row online softmax (kernel 7-8). Kernel 5's online variant is what ships inside attention in train_gpt2.cu.",
+   "note": "Production implementations of this kernel evolve through many versions: naive, shared-memory blocks, then warp-per-row online softmax. The online variant is what ships inside attention in real training loops.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void softmax_forward_kernel(float* out, const float* inp, int N, int C) {\n    // One block per row. Suggested plan:\n    //   1) parallel reduction for the row max (shared memory)\n    //   2) each thread computes exp(x - max) for its columns, accumulate sum\n    //   3) parallel reduction for the sum, then normalize\n    extern __shared__ float shared[];\n}\n\n// out, inp: (N, C) device pointers\nextern \"C\" void solve(float* out, const float* inp, int N, int C) {\n    int threadsPerBlock = 256;\n    size_t smem = threadsPerBlock * sizeof(float);\n    softmax_forward_kernel<<<N, threadsPerBlock, smem>>>(out, inp, N, C);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -271,7 +265,6 @@
     "reduction",
     "normalization"
    ],
-   "file": "layernorm_forward.cu",
    "summary": "Normalize each row to zero mean / unit variance, then scale and shift.",
    "statement": [
     "Implement LayerNorm over the channel dimension. For each of the N = B×T rows of inp (each of length C):",
@@ -295,7 +288,7 @@
     "Var(x) computed as E[x²] − E[x]² is one pass but numerically riskier — both are accepted here",
     "Aim for a single kernel launch"
    ],
-   "note": "layernorm_forward.cu builds from a naive per-row thread (kernel 1) to cooperative-groups warp-per-row (kernel 3+). LayerNorm appears twice per block — 24 times in GPT-2 124M.",
+   "note": "Optimized implementations build from a naive per-row thread to cooperative-groups warp-per-row. LayerNorm appears twice per transformer block: 24 times in GPT-2 124M.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void layernorm_forward_kernel(float* out, float* mean, float* rstd,\n                                         const float* inp, const float* weight,\n                                         const float* bias, int N, int C) {\n    // TODO: one block per row — reduce for mean, reduce for variance,\n    // then normalize: out = (x - m) * rstd * weight + bias\n}\n\n// out: (N,C), mean: (N), rstd: (N), inp: (N,C), weight: (C), bias: (C)\nextern \"C\" void solve(float* out, float* mean, float* rstd, const float* inp,\n                      const float* weight, const float* bias, int N, int C) {\n    int threadsPerBlock = 256;\n    layernorm_forward_kernel<<<N, threadsPerBlock>>>(out, mean, rstd, inp, weight, bias, N, C);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -308,7 +301,6 @@
     "reduction",
     "multi-kernel"
    ],
-   "file": "global_norm.cu",
    "summary": "Reduce 124M floats to a single number: the L2 norm for gradient clipping.",
    "statement": [
     "Compute the sum of squares of an entire tensor: out = Σᵢ data[i]². (The host takes the square root to get the L2 norm used for gradient clipping.)",
@@ -331,7 +323,7 @@
     "At most one atomicAdd per block, not per thread",
     "Grid-stride loops keep the block count reasonable"
    ],
-   "note": "global_norm.cu kernel 3+ uses a fixed grid sized to the GPU (blocks × SMs), a grid-stride loop, warp-level reduction, and one atomic per block. Used every step for grad clipping in llm.c.",
+   "note": "The fastest versions use a fixed grid sized to the GPU (blocks × SMs), a grid-stride loop, warp-level reduction, and one atomic per block. Gradient clipping runs this every training step.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void norm_squared_kernel(float* out, const float* data, size_t count) {\n    // TODO: grid-stride loop -> per-thread partial sum\n    // -> block reduction (shared memory / warp shuffles)\n    // -> one atomicAdd(out, block_sum) per block\n}\n\n// out: single device float (pre-zeroed), data: (count) device pointer\nextern \"C\" void solve(float* out, const float* data, size_t count) {\n    int threadsPerBlock = 512;\n    int blocksPerGrid = 256;  // fixed grid + grid-stride loop\n    norm_squared_kernel<<<blocksPerGrid, threadsPerBlock>>>(out, data, count);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -345,14 +337,13 @@
     "reduction",
     "atomics"
    ],
-   "file": "layernorm_backward.cu",
    "summary": "Three gradients at once: dinp, dweight, dbias — with cross-row accumulation.",
    "statement": [
     "Backpropagate through LayerNorm. Given dout (B,T,C), the forward input inp, weight, and the cached mean and rstd, compute:",
     "dbias[c] = Σ_{b,t} dout[b,t,c]",
     "dweight[c] = Σ_{b,t} norm[b,t,c] · dout[b,t,c]",
     "dinp[b,t,c] = rstd · ( dnorm − mean(dnorm) − norm · mean(dnorm·norm) )   where norm = (inp−μ)·rstd and dnorm = weight · dout",
-    "The difficulty: dinp reduces within a row, but dweight/dbias reduce across all rows — two conflicting parallelization axes in one kernel. This is the hardest non-attention kernel in llm.c."
+    "The difficulty: dinp reduces within a row, but dweight/dbias reduce across all rows — two conflicting parallelization axes in one kernel. This is widely considered the hardest non-attention kernel in a GPT-2 training loop."
    ],
    "requirements": [
     "All three gradient outputs must be written; dweight/dbias are pre-zeroed and accumulated",
@@ -370,7 +361,7 @@
     "Naive atomicAdd on dweight/dbias for every (b,t,c) will be extremely slow",
     "Consider per-block scratch buffers + a final reduce kernel"
    ],
-   "note": "layernorm_backward.cu has 10 kernel versions — the fastest uses warp-per-row for dinp, block-local shared-memory accumulators for dweight/dbias, and a tiny second kernel to fold the scratch buffer.",
+   "note": "The fastest known implementations use warp-per-row for dinp, block-local shared-memory accumulators for dweight/dbias, and a tiny second kernel to fold the scratch buffer.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void layernorm_backward_kernel(float* dinp, float* dweight, float* dbias,\n                                          const float* dout, const float* inp,\n                                          const float* weight, const float* mean,\n                                          const float* rstd, int B, int T, int C) {\n    // TODO: one warp/block per (b,t) row for dinp;\n    // accumulate dweight/dbias across rows (atomics or scratch + reduce)\n}\n\n// dinp: (B,T,C); dweight, dbias: (C) pre-zeroed; mean, rstd: (B,T)\nextern \"C\" void solve(float* dinp, float* dweight, float* dbias,\n                      const float* dout, const float* inp, const float* weight,\n                      const float* mean, const float* rstd, int B, int T, int C) {\n    int threadsPerBlock = 256;\n    layernorm_backward_kernel<<<B * T, threadsPerBlock>>>(dinp, dweight, dbias,\n        dout, inp, weight, mean, rstd, B, T, C);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -384,7 +375,6 @@
     "tiling",
     "compute-bound"
    ],
-   "file": "matmul_forward.cu",
    "summary": "out = inp · Wᵀ + bias. 90%+ of training FLOPs live here.",
    "statement": [
     "Implement the linear layer. Treating inp as a (B·T, C) matrix and weight as (OC, C) (PyTorch layout: one output channel per row), compute:",
@@ -408,7 +398,7 @@
     "Arithmetic intensity is O(tile size) — bigger tiles = more compute per byte",
     "Watch shared memory bank conflicts on the weight tile"
    ],
-   "note": "matmul_forward.cu kernel 1 is the naive version; kernel 4 is a hand-tiled 128×128 blocktile kernel reaching a respectable fraction of cuBLAS. In train_gpt2.cu this op is cuBLAS — but you should know why.",
+   "note": "A hand-tiled 128×128 blocktile kernel reaches a respectable fraction of cuBLAS. Production training loops call cuBLAS for this op, but you should know why.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void matmul_forward_kernel(float* out, const float* inp,\n                                      const float* weight, const float* bias,\n                                      int BT, int C, int OC) {\n    // TODO: shared-memory tiling.\n    // Each block computes a (TILE x TILE) patch of out.\n    // __shared__ float tileA[TILE][TILE], tileB[TILE][TILE];\n}\n\n// out: (BT, OC), inp: (BT, C), weight: (OC, C), bias: (OC) or NULL\nextern \"C\" void solve(float* out, const float* inp, const float* weight,\n                      const float* bias, int BT, int C, int OC) {\n    dim3 block(16, 16);\n    dim3 grid((OC + 15) / 16, (BT + 15) / 16);\n    matmul_forward_kernel<<<grid, block>>>(out, inp, weight, bias, BT, C, OC);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -422,12 +412,11 @@
     "reduction",
     "coalescing"
    ],
-   "file": "matmul_backward_bias.cu",
    "summary": "Column-wise reduction: dbias[o] = Σ over all rows of dout[·, o].",
    "statement": [
     "Compute the bias gradient of a linear layer: dbias[o] = Σ_{b,t} dout[b, t, o].",
     "It looks trivial — it is just a column sum — but doing it fast is subtle. dout is row-major, so a thread that walks down one column makes strided, uncoalesced reads. The trick is to have each warp read contiguous rows and reduce across the row dimension while keeping full-width coalesced loads.",
-    "This kernel went through 9 iterations in llm.c — more than almost any other."
+    "This deceptively simple kernel is notorious for needing many optimization iterations to get fast."
    ],
    "requirements": [
     "dbias is pre-zeroed; accumulate into it",
@@ -445,7 +434,7 @@
     "A one-thread-per-column kernel is ~30× slower than the best version",
     "Shared memory or warp shuffles for the cross-row reduction"
    ],
-   "note": "matmul_backward_bias.cu kernels 1→9 are a masterclass in reduction tuning: thread-per-column → warp-per-column → block-per-column-group with fp32 scratch accumulation.",
+   "note": "The optimization ladder for this kernel is a masterclass in reduction tuning: thread-per-column → warp-per-column → block-per-column-group with fp32 scratch accumulation.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void matmul_backward_bias_kernel(float* dbias, const float* dout,\n                                            int BT, int OC) {\n    // TODO: coalesced loads — consecutive threads read consecutive\n    // columns of the same row, then reduce across rows.\n}\n\n// dbias: (OC) pre-zeroed, dout: (BT, OC) device pointers\nextern \"C\" void solve(float* dbias, const float* dout, int BT, int OC) {\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (OC + threadsPerBlock - 1) / threadsPerBlock;\n    matmul_backward_bias_kernel<<<blocksPerGrid, threadsPerBlock>>>(dbias, dout, BT, OC);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -458,7 +447,6 @@
     "permute",
     "indexing"
    ],
-   "file": "permute.cu",
    "summary": "Reshape the fused QKV projection into head-major Q, K, V tensors.",
    "statement": [
     "The attention block computes Q, K, V with a single fused matmul, producing inp of shape (B, T, 3, NH, HS) — for each position, Q then K then V, split into NH heads of size HS.",
@@ -480,7 +468,7 @@
     "B ≤ 32, T ≤ 1024, NH = 12, HS = 64 (GPT-2 124M)",
     "Writes should be coalesced: parallelize over the output index"
    ],
-   "note": "permute_kernel appears in attention_forward.cu, attention_backward.cu and trimat_forward.cu — layout transforms are the connective tissue of the attention block.",
+   "note": "Permute kernels like this appear throughout the forward and backward attention passes: layout transforms are the connective tissue of the attention block.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void permute_kernel(float* q, float* k, float* v, const float* inp,\n                               int B, int T, int NH, int HS) {\n    // inp: (B, T, 3, NH, HS)  ->  q, k, v: (B, NH, T, HS)\n    // idx = output flat index; recover (b, nh, t, hs), then compute input offset\n}\n\n// q, k, v: (B,NH,T,HS) each; inp: (B,T,3,NH,HS) — device pointers\nextern \"C\" void solve(float* q, float* k, float* v, const float* inp,\n                      int B, int T, int NH, int HS) {\n    int N = B * NH * T * HS;\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    permute_kernel<<<blocksPerGrid, threadsPerBlock>>>(q, k, v, inp, B, T, NH, HS);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -494,7 +482,6 @@
     "causality",
     "tiling"
    ],
-   "file": "trimat_forward.cu",
    "summary": "Q·Kᵀ, but skip everything above the diagonal — causality is free FLOPs.",
    "statement": [
     "Causal attention only ever looks backwards: position t attends to positions 0…t. That means the score matrix preatt = Q·Kᵀ/√HS is lower-triangular — the upper half is masked away and computing it is pure waste.",
@@ -518,7 +505,7 @@
     "Target: ≥ 1.6× the runtime of the equivalent dense batched matmul",
     "Tile the T×T plane; classify tiles as skip / dense / diagonal"
    ],
-   "note": "trimat_forward.cu explores exactly this: a __launch_bounds__(256,2) blocktile kernel that enumerates only the lower-triangular tiles. Same idea as FlashAttention's causal-block skipping.",
+   "note": "The classic solution is a blocktile kernel that enumerates only the lower-triangular tiles. Same idea as FlashAttention's causal-block skipping.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void trimul_kernel(float* preatt, const float* q, const float* k,\n                              int B, int NH, int T, int HS) {\n    // blockIdx.z = (b, nh) pair; blockIdx.x/y tile the (T, T) plane.\n    // if (tile is fully above the diagonal) return;  // free lunch\n    // TODO: shared-memory blocktile matmul for the remaining tiles\n}\n\n// preatt: (B,NH,T,T); q, k: (B,NH,T,HS) — device pointers\nextern \"C\" void solve(float* preatt, const float* q, const float* k,\n                      int B, int NH, int T, int HS) {\n    dim3 block(16, 16);\n    dim3 grid((T + 15) / 16, (T + 15) / 16, B * NH);\n    trimul_kernel<<<grid, block>>>(preatt, q, k, B, NH, T, HS);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -532,14 +519,13 @@
     "multi-kernel",
     "softmax"
    ],
-   "file": "attention_forward.cu",
    "summary": "The full multi-head causal self-attention pipeline.",
    "statement": [
     "Implement multi-head causal self-attention for GPT-2. Given the permuted tensors q, k, v of shape (B, NH, T, HS):",
     "1. Scores: preatt[b,h,t1,t2] = Σᵢ q[b,h,t1,i] · k[b,h,t2,i] / √HS, for t2 ≤ t1",
     "2. Causal softmax: att[b,h,t1,·] = softmax(preatt[b,h,t1, 0…t1]) — future positions get exactly 0",
     "3. Weighted sum: out[b,h,t1,i] = Σ_{t2 ≤ t1} att[b,h,t1,t2] · v[b,h,t2,i]",
-    "You may use three kernels (matmul-like, softmax, matmul-like) — that is how llm.c's reference version works. Fusing them is how you reinvent FlashAttention."
+    "You may use three kernels (matmul-like, softmax, matmul-like) — that is how reference implementations work. Fusing them is how you reinvent FlashAttention."
    ],
    "requirements": [
     "Causality is exact: att[t1, t2] = 0 for t2 > t1",
@@ -557,7 +543,7 @@
     "preatt and att are (B,NH,T,T) scratch — 1.5 GB at B=32; this is why FlashAttention exists",
     "Tolerance 1e-3 vs CPU reference"
    ],
-   "note": "attention_forward.cu has 6+ versions: naive 3-kernel (1), fused-softmax variants (4-5, the one used in train_gpt2.cu), and cuDNN FlashAttention (6). The softmax uses one warp per row with the online max/sum trick.",
+   "note": "Real implementations progress from the naive 3-kernel pipeline through fused-softmax variants to cuDNN FlashAttention. The softmax uses one warp per row with the online max/sum trick.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void attention_scores_kernel(float* preatt, const float* q,\n                                        const float* k, int B, int NH, int T, int HS) {\n    // TODO: preatt[b,h,t1,t2] = dot(q[b,h,t1,:], k[b,h,t2,:]) / sqrtf(HS), t2 <= t1\n}\n\n__global__ void attention_softmax_kernel(float* att, const float* preatt,\n                                         int B, int NH, int T) {\n    // TODO: stable softmax over t2 in [0, t1]; zeros for t2 > t1\n}\n\n__global__ void attention_value_kernel(float* out, const float* att,\n                                       const float* v, int B, int NH, int T, int HS) {\n    // TODO: out[b,h,t1,:] = sum_{t2<=t1} att[b,h,t1,t2] * v[b,h,t2,:]\n}\n\n// q,k,v,out: (B,NH,T,HS); preatt, att: (B,NH,T,T) scratch — device pointers\nextern \"C\" void solve(float* out, float* preatt, float* att, const float* q,\n                      const float* k, const float* v, int B, int NH, int T, int HS) {\n    // TODO: launch the three kernels in order\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -571,7 +557,6 @@
     "backward",
     "boss-fight"
    ],
-   "file": "attention_backward.cu",
    "summary": "The boss fight: backprop through scores, causal softmax, and values.",
    "statement": [
     "Backpropagate through the attention forward pass. Given dout and the saved forward tensors (q, k, v, att), produce dq, dk, dv.",
@@ -579,7 +564,7 @@
     "1. Through the weighted sum: datt = dout · vᵀ,  dv = attᵀ · dout",
     "2. Through the causal softmax: dpreatt[t1,t2] = att[t1,t2] · (datt[t1,t2] − Σ_{t3} datt[t1,t3]·att[t1,t3]) / √HS",
     "3. Through the scores: dq = dpreatt · k,  dk = dpreattᵀ · q",
-    "The softmax-backward (stage 2) is the performance-critical piece — llm.c iterated through 8 versions of it alone."
+    "The softmax-backward (stage 2) is the performance-critical piece; production implementations iterate through many versions of it alone."
    ],
    "requirements": [
     "All of dq, dk, dv must be written (pre-zeroed, accumulate where convenient)",
@@ -597,7 +582,7 @@
     "The softmax Jacobian is dense per-row — reduce before you scatter",
     "Several kernel launches expected"
    ],
-   "note": "attention_backward.cu kernels 1→8 for softmax_autoregressive_backward: from one-thread-per-element with atomics to a block-per-row formulation with no atomics at all. Read them in order — it is a short course in GPU optimization.",
+   "note": "The optimization ladder for the softmax backward runs from one-thread-per-element with atomics to a block-per-row formulation with no atomics at all: a short course in GPU optimization.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void attention_backward_values_kernel(float* dv, float* datt,\n    const float* dout, const float* v, const float* att, int B, int NH, int T, int HS) {\n    // TODO: datt = dout . v^T ; dv = att^T . dout   (causal ranges only)\n}\n\n__global__ void softmax_autoregressive_backward_kernel(float* dpreatt,\n    const float* datt, const float* att, int B, int NH, int T, float scale) {\n    // TODO: dpre[t1,t2] = att[t1,t2] * (datt[t1,t2] - rowdot) * scale\n}\n\n__global__ void attention_backward_scores_kernel(float* dq, float* dk,\n    const float* dpreatt, const float* q, const float* k, int B, int NH, int T, int HS) {\n    // TODO: dq = dpreatt . k ; dk = dpreatt^T . q\n}\n\n// all tensors (B,NH,T,HS) except att/datt/dpreatt: (B,NH,T,T) — device pointers\nextern \"C\" void solve(float* dq, float* dk, float* dv, float* datt, float* dpreatt,\n                      const float* dout, const float* q, const float* k,\n                      const float* v, const float* att, int B, int NH, int T, int HS) {\n    // TODO: launch the three stages in reverse order of the forward pass\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -610,7 +595,6 @@
     "loss",
     "indexing"
    ],
-   "file": "crossentropy_forward.cu",
    "summary": "losses[b,t] = −log(probs[target]) — a gather and a log.",
    "statement": [
     "Given softmax probabilities probs of shape (B, T, V) and integer targets of shape (B, T), compute the per-token loss:",
@@ -632,7 +616,7 @@
     "B ≤ 32, T ≤ 1024, V = 50257",
     "probs rows already sum to 1; no normalization needed here"
    ],
-   "note": "The mean of losses over all (b,t) is the number you watch go down during training. In llm.c this kernel is eventually absorbed into the fused classifier.",
+   "note": "The mean of losses over all (b,t) is the number you watch go down during training. In optimized training loops this kernel is eventually absorbed into the fused classifier.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void crossentropy_forward_kernel(float* losses, const float* probs,\n                                            const int* targets, int B, int T, int V) {\n    // TODO: losses[b,t] = -logf(probs[b*T*V + t*V + targets[b*T + t]])\n}\n\n// losses: (B,T), probs: (B,T,V), targets: (B,T) — device pointers\nextern \"C\" void solve(float* losses, const float* probs, const int* targets,\n                      int B, int T, int V) {\n    int N = B * T;\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    crossentropy_forward_kernel<<<blocksPerGrid, threadsPerBlock>>>(losses, probs, targets, B, T, V);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -645,7 +629,6 @@
     "backward",
     "loss"
    ],
-   "file": "crossentropy_softmax_backward.cu",
    "summary": "The famous simplification: dlogits = probs − one_hot(target).",
    "statement": [
     "Backpropagating through softmax followed by cross-entropy loss collapses into one beautiful expression:",
@@ -668,7 +651,7 @@
     "B ≤ 32, T ≤ 1024, V = 50257",
     "B·T·V elements ≈ 1.6B at max size — bandwidth is everything"
    ],
-   "note": "Kernel 1 in crossentropy_softmax_backward.cu is nearly optimal already — the op is a pure streaming pass. The real win (next problem) is never materializing probs at all.",
+   "note": "The naive version is nearly optimal already: the op is a pure streaming pass. The real win (next problem) is never materializing probs at all.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void crossentropy_softmax_backward_kernel(float* dlogits,\n    const float* dlosses, const float* probs, const int* targets,\n    int B, int T, int V) {\n    // TODO: dlogits[b,t,v] = (probs[b,t,v] - (v == target)) * dlosses[b,t]\n}\n\n// dlogits: (B,T,V) pre-zeroed; probs: (B,T,V); dlosses, targets: (B,T)\nextern \"C\" void solve(float* dlogits, const float* dlosses, const float* probs,\n                      const int* targets, int B, int T, int V) {\n    int N = B * T * V;\n    int threadsPerBlock = 256;\n    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;\n    crossentropy_softmax_backward_kernel<<<blocksPerGrid, threadsPerBlock>>>(\n        dlogits, dlosses, probs, targets, B, T, V);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -682,7 +665,6 @@
     "online-softmax",
     "memory"
    ],
-   "file": "classifier_fused.cu",
    "summary": "Softmax + loss + gradient in one kernel — never materialize the probs.",
    "statement": [
     "The classifier layer works on (B, T, V) logits with V = 50257. Running softmax-forward, crossentropy-forward, and crossentropy-softmax-backward as separate kernels streams that 1.6B-element tensor through global memory three times.",
@@ -690,7 +672,7 @@
     "1. Online-softmax reduction: one pass over the row computing the running max and rescaled exp-sum",
     "2. losses[b,t] = −(logit[target] − max − log(sumexp))",
     "3. Second pass: overwrite the row in place with dlogits = (softmax(logit) − 𝟙{target}) · dloss",
-    "The probs tensor is never written to memory. This single fusion is one of the largest speedups in all of llm.c."
+    "The probs tensor is never written to memory. This single fusion is one of the largest speedups in the entire training loop."
    ],
    "requirements": [
     "One kernel launch; one block (or warp group) per (b, t) row",
@@ -708,7 +690,7 @@
     "V does not fit in shared memory — stream it with a grid-stride row loop",
     "Tolerance 1e-3"
    ],
-   "note": "classifier_fused.cu builds this in 5 versions. Version 5 (with Packed128 loads) is what train_gpt2.cu ships. Deleting the probs tensor also saves 6.4 GB of memory at B=32.",
+   "note": "The fastest versions add 128-bit vectorized loads on top of the fusion. Deleting the probs tensor also saves 6.4 GB of memory at B=32.",
    "starter": "#include <cuda_runtime.h>\n\nstruct SoftmaxParams { float Scale; float Offset; };  // 1/sumexp, max\n\n__global__ void fused_classifier_kernel(float* logits /* in-place -> dlogits */,\n    float* losses, const int* targets, int B, int T, int V, float dloss) {\n    // One block per row (b,t):\n    //   pass 1: online max + rescaled exp-sum (block reduction)\n    //   write losses[b,t]\n    //   pass 2: logits[v] = (expf(x - max) * scale - (v == ix)) * dloss\n}\n\n// logits: (B,T,V) overwritten with gradient; losses: (B,T); targets: (B,T)\nextern \"C\" void solve(float* logits, float* losses, const int* targets,\n                      int B, int T, int V, float dloss) {\n    fused_classifier_kernel<<<B * T, 1024>>>(logits, losses, targets, B, T, V, dloss);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -721,7 +703,6 @@
     "fusion",
     "reduction"
    ],
-   "file": "fused_residual_forward.cu",
    "summary": "Two ops, one pass: add the residual and normalize while it is still in registers.",
    "statement": [
     "In every transformer block, a residual add is immediately followed by a LayerNorm. Run separately, the intermediate tensor makes a full round-trip to global memory just to be re-read.",
@@ -744,7 +725,7 @@
     "One block (or warp) per row; the row fits comfortably in shared memory",
     "Target: ≥ 1.5× faster than running the two kernels separately"
    ],
-   "note": "fused_residual_forward.cu versions 2→6 escalate from simple fusion to warp-per-row with Packed128 loads. llm.c uses this fusion for every one of the 2×12 layernorms in GPT-2 124M.",
+   "note": "Optimized versions escalate from simple fusion to warp-per-row with 128-bit vectorized loads. Production training code uses this fusion for every one of the 2×12 layernorms in GPT-2 124M.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void fused_residual_layernorm_kernel(float* residual, float* normed,\n    float* mean, float* rstd, const float* inp1, const float* inp2,\n    const float* weight, const float* bias, int N, int C) {\n    // TODO: one block per row — compute the sum once, keep it live,\n    // then reduce mean/var and write both outputs.\n}\n\n// residual, normed: (N,C); mean, rstd: (N); inp1, inp2: (N,C); weight, bias: (C)\nextern \"C\" void solve(float* residual, float* normed, float* mean, float* rstd,\n                      const float* inp1, const float* inp2, const float* weight,\n                      const float* bias, int N, int C) {\n    int threadsPerBlock = 256;\n    fused_residual_layernorm_kernel<<<N, threadsPerBlock>>>(residual, normed,\n        mean, rstd, inp1, inp2, weight, bias, N, C);\n    cudaDeviceSynchronize();\n}"
   },
   {
@@ -757,7 +738,6 @@
     "optimizer",
     "elementwise"
    ],
-   "file": "adamw.cu",
    "summary": "The update rule that actually trains the model — moments, bias correction, decay.",
    "statement": [
     "Implement one AdamW update step over all parameters. For each parameter i, with gradient g:",
@@ -780,9 +760,9 @@
    "constraints": [
     "num_parameters up to 124,000,000 (use long for the index!)",
     "4 reads + 3 writes per element — pure bandwidth",
-    "β₁=0.9, β₂=0.999, ε=1e-8, lr=3e-4, wd=0.1 are the llm.c defaults"
+    "β₁=0.9, β₂=0.999, ε=1e-8, lr=3e-4, wd=0.1 are typical GPT-2 training defaults"
    ],
-   "note": "adamw.cu kernel 2 moves the bias-correction divides out of the inner loop. This kernel runs once per training step over every parameter — at 124M params it is not free.",
+   "note": "A key optimization moves the bias-correction divides out of the inner loop. This kernel runs once per training step over every parameter; at 124M params it is not free.",
    "starter": "#include <cuda_runtime.h>\n\n__global__ void adamw_kernel(float* params, const float* grads, float* m, float* v,\n                             long num_parameters, float lr, float beta1, float beta2,\n                             float beta1_correction, float beta2_correction,\n                             float eps, float weight_decay) {\n    // TODO: update m, v, then params — all in place\n}\n\n// params, grads, m, v: (num_parameters) device pointers\nextern \"C\" void solve(float* params, const float* grads, float* m, float* v,\n                      long num_parameters, float lr, float beta1, float beta2,\n                      int t, float eps, float weight_decay) {\n    float beta1_correction = 1.0f - powf(beta1, t);\n    float beta2_correction = 1.0f - powf(beta2, t);\n    int threadsPerBlock = 512;\n    long blocksPerGrid = (num_parameters + threadsPerBlock - 1) / threadsPerBlock;\n    adamw_kernel<<<blocksPerGrid, threadsPerBlock>>>(params, grads, m, v,\n        num_parameters, lr, beta1, beta2, beta1_correction, beta2_correction,\n        eps, weight_decay);\n    cudaDeviceSynchronize();\n}"
   }
  ]

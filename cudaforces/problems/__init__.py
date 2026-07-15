@@ -34,7 +34,6 @@ def all_problems() -> list[ProblemDef]:
             rating=p["rating"],
             chapter=chapters[p["chapter"]],
             tags=p["tags"],
-            llmc_file=p["file"],
             summary=p["summary"],
             statement=p["statement"],
             requirements=p["requirements"],
@@ -90,7 +89,6 @@ def sync_problems(session: sqlmodel.Session) -> None:
         row.chapter_title = pd.chapter.title
         row.chapter_desc = pd.chapter.desc
         row.tags_json = json.dumps(pd.tags)
-        row.llmc_file = pd.llmc_file
         row.summary = pd.summary
         row.statement_json = json.dumps(pd.statement)
         row.requirements_json = json.dumps(pd.requirements)

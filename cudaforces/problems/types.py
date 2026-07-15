@@ -24,7 +24,6 @@ class ProblemDef:
     rating: int
     chapter: Chapter
     tags: list[str]
-    llmc_file: str
     summary: str
     statement: list[str]
     requirements: list[str]

@@ -62,7 +62,6 @@ class Problem(sqlmodel.SQLModel, table=True):
     chapter_title: str = ""
     chapter_desc: str = ""
     tags_json: str = "[]"
-    llmc_file: str = ""
     summary: str = ""
     statement_json: str = "[]"
     requirements_json: str = "[]"

@@ -5,8 +5,6 @@ import reflex as rx
 from .. import theme
 from ..state import ProgressState
 
-LLMC_URL = "https://github.com/karpathy/llm.c/tree/master/dev/cuda"
-
 
 def _logo() -> rx.Component:
     return rx.link(
@@ -108,16 +106,6 @@ def header() -> rx.Component:
                 underline="none",
                 _hover={"color": theme.ACCENT_HOVER},
             ),
-        ),
-        rx.link(
-            "llm.c ↗",
-            href=LLMC_URL,
-            is_external=True,
-            color=theme.DIM,
-            font_size="13px",
-            font_family=theme.MONO,
-            underline="none",
-            _hover={"color": theme.TEXT},
         ),
         position="sticky",
         top="0",

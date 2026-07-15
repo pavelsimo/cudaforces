@@ -14,8 +14,6 @@ from ..components import code_editor, difficulty_badge, header, tag_pill
 from ..models import Problem, Submission
 from ..state import AuthState, ProgressState
 
-LLMC_BASE = "https://github.com/karpathy/llm.c/blob/master/dev/cuda/"
-
 
 @dataclasses.dataclass
 class StatementBlock:
@@ -49,8 +47,6 @@ class ProblemState(AuthState):
     examples: list[ExampleRow] = []
     constraints: list[str] = []
     note: str = ""
-    llmc_file: str = ""
-    llmc_url: str = ""
     starter_code: str = ""
     code: str = ""
     console_lines: list[ConsoleLine] = []
@@ -97,8 +93,6 @@ class ProblemState(AuthState):
             self.examples = [ExampleRow(**e) for e in json.loads(row.examples_json)]
             self.constraints = json.loads(row.constraints_json)
             self.note = row.note
-            self.llmc_file = row.llmc_file
-            self.llmc_url = LLMC_BASE + row.llmc_file
             self.starter_code = row.starter_code
             self.code = self._latest_code(s, row) or row.starter_code
             self.is_solved = self.user_id > 0 and judge.find_solve(s, self.user_id, row.id) is not None
@@ -332,32 +326,24 @@ def _statement_panel() -> rx.Component:
         rx.foreach(ProblemState.examples, _example),
         _section_heading("Constraints"),
         rx.vstack(rx.foreach(ProblemState.constraints, _bullet), spacing="1", align="start"),
-        rx.box(
-            rx.text(
-                "In llm.c",
-                color=theme.ACCENT,
-                font_weight="600",
-                font_size="12px",
-                margin_bottom="4px",
+        rx.cond(
+            ProblemState.note != "",
+            rx.box(
+                rx.text(
+                    "Notes",
+                    color=theme.ACCENT,
+                    font_weight="600",
+                    font_size="12px",
+                    margin_bottom="4px",
+                ),
+                rx.text(ProblemState.note, color=theme.TEXT, font_size="13px", line_height="1.6"),
+                background=theme.ACCENT_BG,
+                border=f"1px solid {theme.ACCENT_BORDER}",
+                border_radius="9px",
+                padding="12px 14px",
+                margin="18px 0",
+                width="100%",
             ),
-            rx.text(ProblemState.note, color=theme.TEXT, font_size="13px", line_height="1.6"),
-            rx.link(
-                "dev/cuda/",
-                ProblemState.llmc_file,
-                " ↗",
-                href=ProblemState.llmc_url,
-                is_external=True,
-                color=theme.ACCENT,
-                font_family=theme.MONO,
-                font_size="12px",
-                underline="hover",
-            ),
-            background=theme.ACCENT_BG,
-            border=f"1px solid {theme.ACCENT_BORDER}",
-            border_radius="9px",
-            padding="12px 14px",
-            margin="18px 0",
-            width="100%",
         ),
         rx.hstack(
             rx.cond(

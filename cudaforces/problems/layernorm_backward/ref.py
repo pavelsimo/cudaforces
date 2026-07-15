@@ -1,6 +1,6 @@
 """Reference for layernorm-backward: dinp, dweight, dbias from cached mean/rstd.
 
-Mirrors the llm.c CPU reference: norm = (inp - mean) * rstd, dnorm = weight * dout,
+Mirrors the standard CPU reference: norm = (inp - mean) * rstd, dnorm = weight * dout,
 dinp = (dnorm - mean(dnorm) - norm * mean(dnorm * norm)) * rstd per row;
 dweight/dbias reduce over all (b, t) rows.
 """
