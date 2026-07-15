@@ -16,12 +16,6 @@ from ..state import AuthState, ProgressState
 
 
 @dataclasses.dataclass
-class StatementBlock:
-    text: str = ""
-    mono: bool = False
-
-
-@dataclasses.dataclass
 class ExampleRow:
     input: str = ""
     output: str = ""
@@ -42,7 +36,7 @@ class ProblemState(AuthState):
     rating_color: str = theme.MUTED
     tags: list[str] = []
     chapter_label: str = ""
-    statement: list[StatementBlock] = []
+    statement: list[str] = []
     requirements: list[str] = []
     examples: list[ExampleRow] = []
     constraints: list[str] = []
@@ -85,10 +79,7 @@ class ProblemState(AuthState):
             self.rating_color = theme.rating_color(row.rating)
             self.tags = json.loads(row.tags_json)
             self.chapter_label = f"{row.chapter_num:02d} · {row.chapter_title}"
-            self.statement = [
-                StatementBlock(text=text, mono=not text.rstrip().endswith((".", ":", "?", "!")))
-                for text in json.loads(row.statement_json)
-            ]
+            self.statement = json.loads(row.statement_json)
             self.requirements = json.loads(row.requirements_json)
             self.examples = [ExampleRow(**e) for e in json.loads(row.examples_json)]
             self.constraints = json.loads(row.constraints_json)
@@ -216,19 +207,33 @@ def _section_heading(text: str) -> rx.Component:
     )
 
 
-def _statement_block(block: StatementBlock) -> rx.Component:
-    return rx.cond(
-        block.mono,
-        rx.box(
-            rx.text(block.text, font_family=theme.MONO, font_size="13px", color=theme.TEXT),
-            background=theme.CARD,
-            border=f"1px solid {theme.BORDER}",
-            border_radius="9px",
-            padding="10px 14px",
-            margin="6px 0",
-            overflow_x="auto",
-        ),
-        rx.text(block.text, color=theme.TEXT, font_size="14px", line_height="1.65", margin="6px 0"),
+def _md_paragraph(value: object, **props: object) -> rx.Component:
+    return rx.text(value, color=theme.TEXT, font_size="14px", line_height="1.65", margin="6px 0")
+
+
+def _md_code(value: object, **props: object) -> rx.Component:
+    return rx.code(
+        value,
+        font_family=theme.MONO,
+        font_size="12.5px",
+        color=theme.TEXT,
+        background=theme.CARD,
+        border=f"1px solid {theme.BORDER}",
+    )
+
+
+# module-level: the map is hashed into the compiled component name
+_MARKDOWN_MAP = {"p": _md_paragraph, "code": _md_code}
+
+
+def _statement_block(text: rx.Var[str] | str) -> rx.Component:
+    """One statement paragraph: markdown with KaTeX ($...$ / $$...$$) enabled."""
+    return rx.markdown(
+        text,
+        component_map=_MARKDOWN_MAP,
+        color=theme.TEXT,
+        width="100%",
+        style={".katex-display": {"margin": "10px 0", "overflow-x": "auto", "overflow-y": "hidden"}},
     )
 
 
@@ -336,7 +341,7 @@ def _statement_panel() -> rx.Component:
                     font_size="12px",
                     margin_bottom="4px",
                 ),
-                rx.text(ProblemState.note, color=theme.TEXT, font_size="13px", line_height="1.6"),
+                _statement_block(ProblemState.note),
                 background=theme.ACCENT_BG,
                 border=f"1px solid {theme.ACCENT_BORDER}",
                 border_radius="9px",

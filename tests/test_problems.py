@@ -19,6 +19,15 @@ def test_every_problem_has_judge_assets() -> None:
         assert (problem_dir / "ref.py").is_file(), pd.slug
 
 
+def test_content_is_clean() -> None:
+    blob = problems.CONTENT_PATH.read_text()
+    assert "—" not in blob  # no em-dashes
+    assert "llm.c" not in blob  # no source attribution
+    for pd in problems.all_problems():
+        for para in pd.statement:
+            assert para.count("$$") % 2 == 0, f"{pd.slug}: unbalanced display math in {para!r}"
+
+
 def test_get_unknown_slug_raises() -> None:
     try:
         problems.get("nope")
