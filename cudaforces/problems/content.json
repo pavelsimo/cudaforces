@@ -91,7 +91,7 @@
    "summary": "The GELU activation (tanh approximation) used in the GPT-2 MLP.",
    "statement": [
     "Implement the GELU activation function using the tanh approximation, applied element-wise:",
-    "$$\\mathrm{GELU}(x) = 0.5\\,x\\left(1 + \\tanh\\!\\left(\\sqrt{2/\\pi}\\,(x + 0.044715\\,x^3)\\right)\\right)$$",
+    "$$\n\\mathrm{GELU}(x) = 0.5\\,x\\left(1 + \\tanh\\!\\left(\\sqrt{2/\\pi}\\,(x + 0.044715\\,x^3)\\right)\\right)\n$$",
     "This is the non-linearity between the two matmuls of every transformer MLP block. Like all element-wise ops it is memory-bound: the tanh is cheap compared to the loads and stores."
    ],
    "requirements": [
@@ -127,7 +127,7 @@
    "statement": [
     "Given the original input `inp` and the upstream gradient `dout`, compute the gradient with respect to the input: $\\mathrm{dinp}_i = \\mathrm{dout}_i \\cdot \\mathrm{GELU}'(\\mathrm{inp}_i)$.",
     "Differentiating the tanh approximation gives, with $k = \\sqrt{2/\\pi}$ and $u = k\\,(x + 0.044715\\,x^3)$:",
-    "$$\\mathrm{GELU}'(x) = 0.5\\,(1 + \\tanh(u)) + 0.5\\,x\\,\\mathrm{sech}^2(u)\\,k\\,(1 + 3 \\cdot 0.044715\\,x^2)$$",
+    "$$\n\\mathrm{GELU}'(x) = 0.5\\,(1 + \\tanh(u)) + 0.5\\,x\\,\\mathrm{sech}^2(u)\\,k\\,(1 + 3 \\cdot 0.044715\\,x^2)\n$$",
     "where $\\mathrm{sech}^2(u) = 1 - \\tanh^2(u)$. Element-wise backward passes have the same shape as their forward pass: one thread per element."
    ],
    "requirements": [
@@ -162,7 +162,7 @@
    "summary": "Token embedding + positional embedding: the first op of the network.",
    "statement": [
     "The encoder turns a batch of token ids into the model's first activations. Given token ids `inp` of shape (B, T), a token embedding table `wte` of shape (V, C) and a positional embedding table `wpe` of shape (T, C), compute:",
-    "$$\\mathrm{out}[b, t, c] = \\mathrm{wte}[\\mathrm{inp}[b, t],\\, c] + \\mathrm{wpe}[t, c]$$",
+    "$$\n\\mathrm{out}[b, t, c] = \\mathrm{wte}[\\mathrm{inp}[b, t],\\, c] + \\mathrm{wpe}[t, c]\n$$",
     "This is a gather (indexed read) followed by an add. Think about which parallelization is best: one thread per (b, t) that loops over C, or one thread per (b, t, c)?"
    ],
    "requirements": [
@@ -232,7 +232,7 @@
    "summary": "Numerically-stable row softmax with shared-memory reductions.",
    "statement": [
     "Compute the softmax of each row of an (N, C) matrix:",
-    "$$\\mathrm{out}_{i,j} = \\frac{\\exp\\left(\\mathrm{inp}_{i,j} - \\max_j \\mathrm{inp}_{i,j}\\right)}{\\sum_k \\exp\\left(\\mathrm{inp}_{i,k} - \\max_j \\mathrm{inp}_{i,j}\\right)}$$",
+    "$$\n\\mathrm{out}_{i,j} = \\frac{\\exp\\left(\\mathrm{inp}_{i,j} - \\max_j \\mathrm{inp}_{i,j}\\right)}{\\sum_k \\exp\\left(\\mathrm{inp}_{i,k} - \\max_j \\mathrm{inp}_{i,j}\\right)}\n$$",
     "Subtracting the row max is not optional: without it, the exponential overflows for logits above ~88. Each row needs two reductions (max, then sum). Assign one block per row and cooperate through shared memory, or go further with warp shuffle intrinsics.",
     "Bonus: the online softmax algorithm computes max and sum in a single pass by rescaling the running sum whenever a new max appears."
    ],
@@ -268,7 +268,7 @@
    "summary": "Normalize each row to zero mean / unit variance, then scale and shift.",
    "statement": [
     "Implement LayerNorm over the channel dimension. For each of the $N = B \\times T$ rows of `inp` (each of length C):",
-    "$$\\mu = \\mathrm{mean}(x) \\qquad \\sigma^2 = \\mathrm{var}(x) \\qquad \\mathrm{out} = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\varepsilon}} \\cdot \\mathrm{weight} + \\mathrm{bias}$$",
+    "$$\n\\mu = \\mathrm{mean}(x) \\qquad \\sigma^2 = \\mathrm{var}(x) \\qquad \\mathrm{out} = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\varepsilon}} \\cdot \\mathrm{weight} + \\mathrm{bias}\n$$",
     "with $\\varepsilon = 10^{-5}$. Additionally write $\\mu$ into `mean[i]` and $1/\\sqrt{\\sigma^2 + \\varepsilon}$ into `rstd[i]`: the backward pass needs them and recomputation is wasteful.",
     "Like softmax this is a row-wise reduction: one block (or one warp) per row is the natural mapping."
    ],
@@ -340,8 +340,8 @@
    "summary": "Three gradients at once (dinp, dweight, dbias) with cross-row accumulation.",
    "statement": [
     "Backpropagate through LayerNorm. Given `dout` (B,T,C), the forward input `inp`, `weight`, and the cached `mean` and `rstd`, compute:",
-    "$$\\mathrm{dbias}_c = \\sum_{b,t} \\mathrm{dout}_{b,t,c} \\qquad \\mathrm{dweight}_c = \\sum_{b,t} \\mathrm{norm}_{b,t,c} \\cdot \\mathrm{dout}_{b,t,c}$$",
-    "$$\\mathrm{dinp}_{b,t,c} = \\mathrm{rstd} \\cdot \\left(\\mathrm{dnorm} - \\mathrm{mean}(\\mathrm{dnorm}) - \\mathrm{norm} \\cdot \\mathrm{mean}(\\mathrm{dnorm} \\cdot \\mathrm{norm})\\right)$$",
+    "$$\n\\mathrm{dbias}_c = \\sum_{b,t} \\mathrm{dout}_{b,t,c} \\qquad \\mathrm{dweight}_c = \\sum_{b,t} \\mathrm{norm}_{b,t,c} \\cdot \\mathrm{dout}_{b,t,c}\n$$",
+    "$$\n\\mathrm{dinp}_{b,t,c} = \\mathrm{rstd} \\cdot \\left(\\mathrm{dnorm} - \\mathrm{mean}(\\mathrm{dnorm}) - \\mathrm{norm} \\cdot \\mathrm{mean}(\\mathrm{dnorm} \\cdot \\mathrm{norm})\\right)\n$$",
     "where $\\mathrm{norm} = (\\mathrm{inp} - \\mu) \\cdot \\mathrm{rstd}$ and $\\mathrm{dnorm} = \\mathrm{weight} \\cdot \\mathrm{dout}$.",
     "The difficulty: `dinp` reduces within a row, but `dweight`/`dbias` reduce across all rows. Two conflicting parallelization axes in one kernel. This is widely considered the hardest non-attention kernel in a GPT-2 training loop."
    ],
@@ -378,7 +378,7 @@
    "summary": "out = inp · Wᵀ + bias. 90%+ of training FLOPs live here.",
    "statement": [
     "Implement the linear layer. Treating `inp` as a $(B \\cdot T, C)$ matrix and `weight` as $(OC, C)$ (PyTorch layout: one output channel per row), compute:",
-    "$$\\mathrm{out}_{i,o} = \\mathrm{bias}_o + \\sum_c \\mathrm{inp}_{i,c} \\cdot \\mathrm{weight}_{o,c}$$",
+    "$$\n\\mathrm{out}_{i,o} = \\mathrm{bias}_o + \\sum_c \\mathrm{inp}_{i,c} \\cdot \\mathrm{weight}_{o,c}\n$$",
     "A naive one-thread-per-output-element kernel gets ~1% of peak FLOPs. The classic fix is shared-memory tiling: each block loads a tile of `inp` and a tile of `weight` into shared memory, and every thread computes a small register tile of outputs.",
     "You will not beat cuBLAS; the point is to understand what cuBLAS is doing for you."
    ],
@@ -486,7 +486,7 @@
    "statement": [
     "Causal attention only ever looks backwards: position $t$ attends to positions $0 \\dots t$. That means the score matrix $\\mathrm{preatt} = QK^\\top / \\sqrt{HS}$ is lower-triangular; the upper half is masked away and computing it is pure waste.",
     "Write a batched matmul over (B, NH) head pairs that computes only the lower triangle:",
-    "$$\\mathrm{preatt}[b, h, t_1, t_2] = \\frac{1}{\\sqrt{HS}} \\sum_i Q[b, h, t_1, i] \\cdot K[b, h, t_2, i] \\qquad \\text{for } t_2 \\le t_1$$",
+    "$$\n\\mathrm{preatt}[b, h, t_1, t_2] = \\frac{1}{\\sqrt{HS}} \\sum_i Q[b, h, t_1, i] \\cdot K[b, h, t_2, i] \\qquad \\text{for } t_2 \\le t_1\n$$",
     "The interesting part is the block decomposition: diagonal tiles are half-full, sub-diagonal tiles are dense, super-diagonal tiles can be skipped entirely. Done right, this halves the FLOPs of the biggest non-matmul op in the model."
    ],
    "requirements": [
@@ -598,7 +598,7 @@
    "summary": "losses[b,t] = −log(probs[target]): a gather and a log.",
    "statement": [
     "Given softmax probabilities `probs` of shape (B, T, V) and integer targets of shape (B, T), compute the per-token loss:",
-    "$$\\mathrm{losses}[b, t] = -\\log\\left(\\mathrm{probs}[b, t, \\mathrm{targets}[b, t]]\\right)$$",
+    "$$\n\\mathrm{losses}[b, t] = -\\log\\left(\\mathrm{probs}[b, t, \\mathrm{targets}[b, t]]\\right)\n$$",
     "Each output element touches exactly one input float: parallelize over the $B \\cdot T$ positions. The subtlety is purely about indexing into the huge (B, T, V) tensor correctly."
    ],
    "requirements": [
@@ -632,7 +632,7 @@
    "summary": "The famous simplification: dlogits = probs − one_hot(target).",
    "statement": [
     "Backpropagating through softmax followed by cross-entropy loss collapses into one beautiful expression:",
-    "$$\\mathrm{dlogits}[b, t, v] = \\left(\\mathrm{probs}[b, t, v] - \\mathbb{1}\\{v = \\mathrm{targets}[b, t]\\}\\right) \\cdot \\mathrm{dlosses}[b, t]$$",
+    "$$\n\\mathrm{dlogits}[b, t, v] = \\left(\\mathrm{probs}[b, t, v] - \\mathbb{1}\\{v = \\mathrm{targets}[b, t]\\}\\right) \\cdot \\mathrm{dlosses}[b, t]\n$$",
     "No Jacobians, no reductions: the two gradients cancel into a subtraction. Implement it with one thread per (b, t, v) element.",
     "If you have ever wondered why every framework fuses softmax with cross-entropy: this identity is why."
    ],
@@ -741,9 +741,9 @@
    "summary": "The update rule that actually trains the model: moments, bias correction, decay.",
    "statement": [
     "Implement one AdamW update step over all parameters. For each parameter $i$, with gradient $g$:",
-    "$$m_i = \\beta_1 m_i + (1 - \\beta_1)\\,g \\qquad v_i = \\beta_2 v_i + (1 - \\beta_2)\\,g^2$$",
-    "$$\\hat{m} = \\frac{m_i}{1 - \\beta_1^t} \\qquad \\hat{v} = \\frac{v_i}{1 - \\beta_2^t}$$",
-    "$$\\mathrm{params}_i \\leftarrow \\mathrm{params}_i - \\mathrm{lr} \\cdot \\left(\\frac{\\hat{m}}{\\sqrt{\\hat{v}} + \\varepsilon} + \\mathrm{weight\\_decay} \\cdot \\mathrm{params}_i\\right)$$",
+    "$$\nm_i = \\beta_1 m_i + (1 - \\beta_1)\\,g \\qquad v_i = \\beta_2 v_i + (1 - \\beta_2)\\,g^2\n$$",
+    "$$\n\\hat{m} = \\frac{m_i}{1 - \\beta_1^t} \\qquad \\hat{v} = \\frac{v_i}{1 - \\beta_2^t}\n$$",
+    "$$\n\\mathrm{params}_i \\leftarrow \\mathrm{params}_i - \\mathrm{lr} \\cdot \\left(\\frac{\\hat{m}}{\\sqrt{\\hat{v}} + \\varepsilon} + \\mathrm{weight\\_decay} \\cdot \\mathrm{params}_i\\right)\n$$",
     "Element-wise over 124M parameters, but with four tensors in flight (`params`, `grads`, `m`, `v`): a good exercise in register pressure and read-modify-write bandwidth. The bias-correction terms $(1 - \\beta^t)$ are the same for every element: compute them on the host."
    ],
    "requirements": [
