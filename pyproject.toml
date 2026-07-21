@@ -5,7 +5,7 @@ description = "Codeforces-style CUDA kernel problemset with a local nvcc judge"
 requires-python = ">=3.13"
 dependencies = [
     "reflex>=0.9",
-    "fastapi>=0.115",
+    "fastapi>=0.139.2",
     "sqlmodel>=0.0.24",
     "alembic>=1.15",
     "numpy>=2.5.1",
